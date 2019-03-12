@@ -15,7 +15,12 @@
 package net.rptools.maptool.client.functions;
 
 import com.twelvemonkeys.lang.StringUtil;
+
+import java.io.File;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -43,14 +48,32 @@ public class FrameworksFunctions implements Function {
   private final int minParameters;
   private final int maxParameters;
   private final boolean deterministic;
+  
+  private FrameworkClassLoader frameworksClassLoader;
 
   private FrameworksFunctions() {
-    this.minParameters = 2;
+	this.minParameters = 2;
     this.maxParameters = 2;
     this.deterministic = true;
     init();
   }
 
+  private List<File> getPossibleExtensions(File directory) {
+	  List<File> files = new LinkedList<>();
+
+	  for (File file : directory.listFiles()) {
+	    if (file.isFile()) {
+          if (file.getName().endsWith(".jar")) {
+            files.add(file);
+          }
+        } else if (file.isDirectory()) {
+        	files.addAll(getPossibleExtensions(file));
+        }
+      }
+
+	  return files;
+  }
+  
   private void init() {
     frameworkFunctions.clear();
     frameworkFunctionsAliasMap.clear();
@@ -60,9 +83,50 @@ public class FrameworksFunctions implements Function {
     frameworkFunctionsAliasMap.put(IMPORT_FUNCTION_NAME, this);
     frameworkAliasPrefixMap.put(IMPORT_FUNCTION_NAME, IMPORT_FUNCTION_NAME);
     frameworkFunctionsAliasMap.put(INIT_FUNCTION_NAME, this);
-    frameworkAliasPrefixMap.put(INIT_FUNCTION_NAME, INIT_FUNCTION_NAME);
+    frameworkAliasPrefixMap.put(INIT_FUNCTION_NAME, INIT_FUNCTION_NAME); 
+
+    frameworksClassLoader = new FrameworkClassLoader(
+      new URL[] {}, this.getClass().getClassLoader()
+    );
+}
+  
+  private void initFrameworks() {
+	// try to get frameworks jar libs from default extension-frameworks folder
+    File frameworksDirectory = new File("./extension-frameworks");
+    List<File> possibleFrameworkLibs = getPossibleExtensions(frameworksDirectory);
+    
+    for(File frameworkLib : possibleFrameworkLibs) {
+      MapTool.addLocalMessage("found possible extension framework: "+frameworkLib.getAbsolutePath());
+    }
+	
+    for(File frameworkLib : possibleFrameworkLibs) {
+    	initFrameworks(frameworkLib);
+    }
+  }
+  
+  private void initFrameworks(File frameworkLib) {
+    try {
+      initFramework(frameworkLib.toURI().toURL());
+    } catch (MalformedURLException e) {
+      MapTool.addLocalMessage("failed init framework: "+frameworkLib.getAbsolutePath());
+      throw new RuntimeException(e);	    
+    }	   
+  }
+  
+  private void initFramework(String frameworkLibURL) {
+    try {
+      initFramework(new URL(frameworkLibURL));
+    } catch (MalformedURLException e) {
+    	MapTool.addLocalMessage("failed init framework: "+frameworkLibURL);
+        throw new RuntimeException(e);	    
+    }	   
   }
 
+  private void initFramework(URL frameworkLibURL) {
+    MapTool.addLocalMessage("init framework: "+frameworkLibURL.toString());
+    frameworksClassLoader.addURL(frameworkLibURL); 
+  }
+  
   private final List<Function> frameworkFunctions = new LinkedList<>();
   private final Map<String, Function> frameworkFunctionsAliasMap = new HashMap<>();
   private final Map<String, String> frameworkAliasPrefixMap = new HashMap<>();
@@ -81,7 +145,14 @@ public class FrameworksFunctions implements Function {
     if (functionName.equals(IMPORT_FUNCTION_NAME)) {
       return importFunction(functionName, parameters);
     } else if (functionName.equals(INIT_FUNCTION_NAME)) {
-      init();
+    	if (parameters.size() == 0) {
+          init();
+          initFrameworks();
+    	} else {
+    		for(Object parameter : parameters) {
+    			initFramework(parameter.toString());
+    		}
+    	}
       return BigDecimal.ONE;
     } else {
       return executeFunction(parser, functionName, parameters);
@@ -111,7 +182,7 @@ public class FrameworksFunctions implements Function {
     try {
       Framework framework =
           (Framework)
-              Class.forName(frameworkName.toString()).getDeclaredConstructor().newInstance();
+              Class.forName(frameworkName.toString(), true, frameworksClassLoader).getDeclaredConstructor().newInstance();
       Collection<? extends Function> functions = framework.getFunctions();
       Collection<? extends Macro> chatMacros = framework.getChatMacros();
 
@@ -145,7 +216,7 @@ public class FrameworksFunctions implements Function {
 
     return "<br>"
         + (newFunctionNames.stream().collect(Collectors.joining(", ")))
-        + " framework functions defined.";
+        + " framework functions defined (from "+frameworkName+").";
   }
 
   private Object executeFunction(Parser parser, String functionName, List<Object> parameters)
@@ -232,6 +303,19 @@ public class FrameworksFunctions implements Function {
     Collection<? extends Macro> getChatMacros();
   }
 
+  protected static class FrameworkClassLoader extends URLClassLoader {
+
+		public FrameworkClassLoader(URL[] urls, ClassLoader parent) {
+			super(urls, parent);
+		}
+
+		@Override
+		public void addURL(URL url) {
+			super.addURL(url);
+		}
+  	
+  }
+  
   public static class FunctionCaller {
 
     public static Object callFunction(
@@ -253,7 +337,7 @@ public class FrameworksFunctions implements Function {
     public static <T> T getParam(List<Object> parameters, int i) {
       return getParam(parameters, i, null);
     }
-
+    
     @SuppressWarnings("unchecked")
     public static <T> T getParam(List<Object> parameters, int i, T defaultValue) {
       if (parameters != null && parameters.size() > i) {
