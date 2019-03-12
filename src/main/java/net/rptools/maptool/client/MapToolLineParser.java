@@ -1465,7 +1465,6 @@ public class MapToolLineParser {
       boolean catchAssert = BigDecimal.ONE.equals(resolver.getVariable("macro.catchAssert"));
       if (!catchAssert) throw e;
       MapTool.addLocalMessage(e.getMessage());
-
       // return an empty result to not collide with tooltips
       // when catching an assert`
       Result result = new Result("");
