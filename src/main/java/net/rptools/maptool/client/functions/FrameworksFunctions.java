@@ -54,26 +54,26 @@ public class FrameworksFunctions implements Function {
   private FrameworkClassLoader frameworksClassLoader;
 
   private FrameworksFunctions() {
-	this.minParameters = 2;
+  this.minParameters = 2;
     this.maxParameters = 2;
     this.deterministic = true;
     init();
   }
 
   private List<File> getPossibleExtensions(File directory) {
-	  List<File> files = new LinkedList<>();
+    List<File> files = new LinkedList<>();
 
-	  for (File file : directory.listFiles()) {
-	    if (file.isFile()) {
+    for (File file : directory.listFiles()) {
+      if (file.isFile()) {
           if (file.getName().endsWith(".jar")) {
             files.add(file);
           }
         } else if (file.isDirectory()) {
-        	files.addAll(getPossibleExtensions(file));
+          files.addAll(getPossibleExtensions(file));
         }
       }
 
-	  return files;
+    return files;
   }
   
   private void init() {
@@ -95,7 +95,7 @@ public class FrameworksFunctions implements Function {
 }
   
   private void initFrameworksFromExtensionDirectory() {
-	// try to get frameworks jar libs from default extension-frameworks folder
+  // try to get frameworks jar libs from default extension-frameworks folder
     File frameworksDirectory = new File("./extension-frameworks");
     
     if (frameworksDirectory.exists() && frameworksDirectory.canRead() && frameworksDirectory.isDirectory() ) {
@@ -104,9 +104,9 @@ public class FrameworksFunctions implements Function {
       for(File frameworkLib : possibleFrameworkLibs) {
         MapTool.addLocalMessage("found possible extension framework: "+frameworkLib.getAbsolutePath());
       }
-  	
+    
       for(File frameworkLib : possibleFrameworkLibs) {
-      	initFrameworks(frameworkLib);
+        initFrameworks(frameworkLib);
       }
     }
   }
@@ -116,17 +116,17 @@ public class FrameworksFunctions implements Function {
       initFramework(frameworkLib.toURI().toURL());
     } catch (MalformedURLException e) {
       MapTool.addLocalMessage("failed init framework: "+frameworkLib.getAbsolutePath());
-      throw new RuntimeException(e);	    
-    }	   
+      throw new RuntimeException(e);      
+    }    
   }
   
   private void initFramework(String frameworkLibURL) {
     try {
       initFramework(new URL(frameworkLibURL));
     } catch (MalformedURLException e) {
-    	MapTool.addLocalMessage("failed init framework: "+frameworkLibURL);
-        throw new RuntimeException(e);	    
-    }	   
+      MapTool.addLocalMessage("failed init framework: "+frameworkLibURL);
+        throw new RuntimeException(e);      
+    }    
   }
 
   private void initFramework(URL frameworkLibURL) {
@@ -159,14 +159,14 @@ public class FrameworksFunctions implements Function {
     if (IMPORT_FUNCTION_NAME.equals(functionName)) {
       return importFunction(functionName, parameters);
     } else if (INIT_FUNCTION_NAME.equals(functionName)) {
-    	if (parameters.size() == 0) {
+      if (parameters.size() == 0) {
           init();
           initFrameworksFromExtensionDirectory();
-    	} else {
-    		for(Object parameter : parameters) {
-    			initFramework(parameter.toString());
-    		}
-    	}
+      } else {
+        for(Object parameter : parameters) {
+          initFramework(parameter.toString());
+        }
+      }
       return BigDecimal.ONE;
     } else {
       return executeFunction(parser, functionName, parameters);
@@ -323,15 +323,15 @@ public class FrameworksFunctions implements Function {
 
   protected static class FrameworkClassLoader extends URLClassLoader {
 
-		public FrameworkClassLoader(URL[] urls, ClassLoader parent) {
-			super(urls, parent);
-		}
+    public FrameworkClassLoader(URL[] urls, ClassLoader parent) {
+      super(urls, parent);
+    }
 
-		@Override
-		public void addURL(URL url) {
-			super.addURL(url);
-		}
-  	
+    @Override
+    public void addURL(URL url) {
+      super.addURL(url);
+    }
+    
   }
   
   public static class FunctionCaller {
