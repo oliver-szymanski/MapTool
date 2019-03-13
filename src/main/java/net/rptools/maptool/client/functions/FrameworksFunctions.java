@@ -104,9 +104,9 @@ public class FrameworksFunctions implements Function {
       for(File frameworkLib : possibleFrameworkLibs) {
         MapTool.addLocalMessage("found possible extension framework: "+frameworkLib.getAbsolutePath());
       }
-    
+  	
       for(File frameworkLib : possibleFrameworkLibs) {
-        initFrameworks(frameworkLib);
+      	initFrameworks(frameworkLib);
       }
     }
   }
@@ -159,14 +159,14 @@ public class FrameworksFunctions implements Function {
     if (IMPORT_FUNCTION_NAME.equals(functionName)) {
       return importFunction(functionName, parameters);
     } else if (INIT_FUNCTION_NAME.equals(functionName)) {
-      if (parameters.size() == 0) {
+    	if (parameters.size() == 0) {
           init();
           initFrameworksFromExtensionDirectory();
-      } else {
-        for(Object parameter : parameters) {
-          initFramework(parameter.toString());
-        }
-      }
+    	} else {
+    		for(Object parameter : parameters) {
+    			initFramework(parameter.toString());
+    		}
+    	}
       return BigDecimal.ONE;
     } else {
       return executeFunction(parser, functionName, parameters);
