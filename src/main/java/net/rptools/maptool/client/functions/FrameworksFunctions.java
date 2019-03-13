@@ -38,13 +38,15 @@ import net.rptools.parser.Parser;
 import net.rptools.parser.ParserException;
 import net.rptools.parser.function.Function;
 import net.rptools.parser.function.ParameterException;
+import net.sf.json.JSONObject;
 
 /** @author oliver.szymanski */
 public class FrameworksFunctions implements Function {
   private static final FrameworksFunctions instance = new FrameworksFunctions();
   private static final String IMPORT_FUNCTION_NAME = "importFramework";
   private static final String INIT_FUNCTION_NAME = "initFrameworks";
-
+  private static final String UNPACK_ARGS_FUNCTION_NAME = "unpackArgs";
+  
   private final int minParameters;
   private final int maxParameters;
   private final boolean deterministic;
@@ -82,6 +84,8 @@ public class FrameworksFunctions implements Function {
     frameworkFunctions.add(this);
     frameworkFunctionsAliasMap.put(IMPORT_FUNCTION_NAME, this);
     frameworkAliasPrefixMap.put(IMPORT_FUNCTION_NAME, IMPORT_FUNCTION_NAME);
+    frameworkFunctionsAliasMap.put(UNPACK_ARGS_FUNCTION_NAME, this);
+    frameworkAliasPrefixMap.put(UNPACK_ARGS_FUNCTION_NAME, UNPACK_ARGS_FUNCTION_NAME);
     frameworkFunctionsAliasMap.put(INIT_FUNCTION_NAME, this);
     frameworkAliasPrefixMap.put(INIT_FUNCTION_NAME, INIT_FUNCTION_NAME); 
 
@@ -90,17 +94,20 @@ public class FrameworksFunctions implements Function {
     );
 }
   
-  private void initFrameworks() {
+  private void initFrameworksFromExtensionDirectory() {
 	// try to get frameworks jar libs from default extension-frameworks folder
     File frameworksDirectory = new File("./extension-frameworks");
-    List<File> possibleFrameworkLibs = getPossibleExtensions(frameworksDirectory);
     
-    for(File frameworkLib : possibleFrameworkLibs) {
-      MapTool.addLocalMessage("found possible extension framework: "+frameworkLib.getAbsolutePath());
-    }
-	
-    for(File frameworkLib : possibleFrameworkLibs) {
-    	initFrameworks(frameworkLib);
+    if (frameworksDirectory.exists() && frameworksDirectory.canRead() && frameworksDirectory.isDirectory() ) {
+      List<File> possibleFrameworkLibs = getPossibleExtensions(frameworksDirectory);
+      
+      for(File frameworkLib : possibleFrameworkLibs) {
+        MapTool.addLocalMessage("found possible extension framework: "+frameworkLib.getAbsolutePath());
+      }
+  	
+      for(File frameworkLib : possibleFrameworkLibs) {
+      	initFrameworks(frameworkLib);
+      }
     }
   }
   
@@ -138,16 +145,23 @@ public class FrameworksFunctions implements Function {
   public Object childEvaluate(Parser parser, String functionName, List<Object> parameters)
       throws ParserException {
 
+    // only untrusted function so far
+    if (UNPACK_ARGS_FUNCTION_NAME.equals(functionName)) {
+      Object message = FunctionCaller.getParam(parameters, 0);
+      return JSONObject.fromObject(message).get("args");
+    }
+    
+    // all extension function need to be trusted 
     if (!MapTool.getParser().isMacroTrusted()) {
       throw new ParserException(I18N.getText("macro.function.general.noPerm", functionName));
     }
 
-    if (functionName.equals(IMPORT_FUNCTION_NAME)) {
+    if (IMPORT_FUNCTION_NAME.equals(functionName)) {
       return importFunction(functionName, parameters);
-    } else if (functionName.equals(INIT_FUNCTION_NAME)) {
+    } else if (INIT_FUNCTION_NAME.equals(functionName)) {
     	if (parameters.size() == 0) {
           init();
-          initFrameworks();
+          initFrameworksFromExtensionDirectory();
     	} else {
     		for(Object parameter : parameters) {
     			initFramework(parameter.toString());
@@ -183,6 +197,7 @@ public class FrameworksFunctions implements Function {
       Framework framework =
           (Framework)
               Class.forName(frameworkName.toString(), true, frameworksClassLoader).getDeclaredConstructor().newInstance();
+      MapTool.addLocalMessage("imported framework: "+frameworkName.toString());
       Collection<? extends Function> functions = framework.getFunctions();
       Collection<? extends Macro> chatMacros = framework.getChatMacros();
 
@@ -212,11 +227,14 @@ public class FrameworksFunctions implements Function {
       throw new ParserException(e);
     }
 
+    String functions = newFunctionNames.stream().collect(Collectors.joining(", "));
+    String macros = newChatMacros.stream().collect(Collectors.joining(", "));
+    
     MapToolScriptSyntax.resetScriptSyntax();
-
-    return "<br>"
-        + (newFunctionNames.stream().collect(Collectors.joining(", ")))
-        + " framework functions defined (from "+frameworkName+").";
+    MapTool.addLocalMessage("frameworkName defined chat macros: "+macros);
+    MapTool.addLocalMessage("frameworkName defined functions: "+functions);
+    
+    return BigDecimal.ONE;
   }
 
   private Object executeFunction(Parser parser, String functionName, List<Object> parameters)
