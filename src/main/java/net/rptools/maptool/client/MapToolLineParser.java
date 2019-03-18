@@ -67,6 +67,7 @@ public class MapToolLineParser {
               DefineMacroFunction.getInstance(),
               EvalMacroFunctions.getInstance(),
               FindTokenFunctions.getInstance(),
+              FrameworksFunctions.getInstance(),
               HasImpersonated.getInstance(),
               InitiativeRoundFunction.getInstance(),
               InputFunction.getInstance(),
