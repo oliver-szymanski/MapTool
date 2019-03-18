@@ -45,6 +45,7 @@ public class FrameworksFunctions implements Function {
   private static final FrameworksFunctions instance = new FrameworksFunctions();
   private static final String IMPORT_FUNCTION_NAME = "importFramework";
   private static final String INIT_FUNCTION_NAME = "initFrameworks";
+  private static final String RESET_FUNCTION_NAME = "resetFrameworks";
   private static final String UNPACK_ARGS_FUNCTION_NAME = "unpackArgs";
   
   private final int minParameters;
@@ -54,7 +55,7 @@ public class FrameworksFunctions implements Function {
   private FrameworkClassLoader frameworksClassLoader;
 
   private FrameworksFunctions() {
-	this.minParameters = 2;
+	  this.minParameters = 2;
     this.maxParameters = 2;
     this.deterministic = true;
     init();
@@ -81,7 +82,8 @@ public class FrameworksFunctions implements Function {
     frameworkFunctionsAliasMap.clear();
     frameworkAliasPrefixMap.clear();
 
-    frameworkFunctions.add(this);
+    // add the default functions without any prefix
+    frameworkFunctions.add(this);    
     frameworkFunctionsAliasMap.put(IMPORT_FUNCTION_NAME, this);
     frameworkAliasPrefixMap.put(IMPORT_FUNCTION_NAME, IMPORT_FUNCTION_NAME);
     frameworkFunctionsAliasMap.put(UNPACK_ARGS_FUNCTION_NAME, this);
@@ -158,9 +160,11 @@ public class FrameworksFunctions implements Function {
 
     if (IMPORT_FUNCTION_NAME.equals(functionName)) {
       return importFunction(functionName, parameters);
+    } else if (RESET_FUNCTION_NAME.equals(functionName)) {
+      init();
+      return BigDecimal.ONE;
     } else if (INIT_FUNCTION_NAME.equals(functionName)) {
     	if (parameters.size() == 0) {
-          init();
           initFrameworksFromExtensionDirectory();
     	} else {
     		for(Object parameter : parameters) {
