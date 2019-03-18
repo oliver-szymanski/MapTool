@@ -43,9 +43,9 @@ import net.sf.json.JSONObject;
 /** @author oliver.szymanski */
 public class FrameworksFunctions implements Function {
   private static final FrameworksFunctions instance = new FrameworksFunctions();
-  private static final String IMPORT_FUNCTION_NAME = "importFramework";
-  private static final String INIT_FUNCTION_NAME = "initFrameworks";
-  private static final String RESET_FUNCTION_NAME = "resetFrameworks";
+  private static final String IMPORT_FUNCTIONS_BUNDLE = "importFunctionsBundle";
+  private static final String INIT_FRAMEWORKS = "initFrameworks";
+  private static final String RESET_FRAMEWORKS = "resetFrameworks";
   private static final String UNPACK_ARGS_FUNCTION_NAME = "unpackArgs";
   
   private final int minParameters;
@@ -84,12 +84,17 @@ public class FrameworksFunctions implements Function {
 
     // add the default functions without any prefix
     frameworkFunctions.add(this);    
-    frameworkFunctionsAliasMap.put(IMPORT_FUNCTION_NAME, this);
-    frameworkAliasPrefixMap.put(IMPORT_FUNCTION_NAME, IMPORT_FUNCTION_NAME);
+    frameworkFunctionsAliasMap.put(IMPORT_FUNCTIONS_BUNDLE, this);
+    frameworkAliasPrefixMap.put(IMPORT_FUNCTIONS_BUNDLE, IMPORT_FUNCTIONS_BUNDLE);
+
     frameworkFunctionsAliasMap.put(UNPACK_ARGS_FUNCTION_NAME, this);
     frameworkAliasPrefixMap.put(UNPACK_ARGS_FUNCTION_NAME, UNPACK_ARGS_FUNCTION_NAME);
-    frameworkFunctionsAliasMap.put(INIT_FUNCTION_NAME, this);
-    frameworkAliasPrefixMap.put(INIT_FUNCTION_NAME, INIT_FUNCTION_NAME); 
+    
+    frameworkFunctionsAliasMap.put(INIT_FRAMEWORKS, this);
+    frameworkAliasPrefixMap.put(INIT_FRAMEWORKS, INIT_FRAMEWORKS); 
+    
+    frameworkFunctionsAliasMap.put(RESET_FRAMEWORKS, this);
+    frameworkAliasPrefixMap.put(RESET_FRAMEWORKS, RESET_FRAMEWORKS); 
 
     frameworksClassLoader = new FrameworkClassLoader(
       new URL[] {}, this.getClass().getClassLoader()
@@ -110,6 +115,8 @@ public class FrameworksFunctions implements Function {
       for(File frameworkLib : possibleFrameworkLibs) {
       	initFrameworks(frameworkLib);
       }
+    } else {
+      MapTool.addLocalMessage("no extension-frameworks  framework directory found: "+frameworksDirectory.getAbsolutePath());
     }
   }
   
@@ -132,6 +139,9 @@ public class FrameworksFunctions implements Function {
   }
 
   private void initFramework(URL frameworkLibURL) {
+    if (!MapTool.confirm("Really want to load {0}?\n\nIt's a security risk to load frameworks.\nMake sure you got the file from a trusted source.",frameworkLibURL.toString())) {
+      return;
+    }
     MapTool.addLocalMessage("init framework: "+frameworkLibURL.toString());
     frameworksClassLoader.addURL(frameworkLibURL); 
   }
@@ -158,16 +168,18 @@ public class FrameworksFunctions implements Function {
       throw new ParserException(I18N.getText("macro.function.general.noPerm", functionName));
     }
 
-    if (IMPORT_FUNCTION_NAME.equals(functionName)) {
-      return importFunction(functionName, parameters);
-    } else if (RESET_FUNCTION_NAME.equals(functionName)) {
+    if (IMPORT_FUNCTIONS_BUNDLE.equals(functionName)) {
+      return importFunctions(IMPORT_FUNCTIONS_BUNDLE, parameters);
+    } else if (RESET_FRAMEWORKS.equals(functionName)) {
       init();
       return BigDecimal.ONE;
-    } else if (INIT_FUNCTION_NAME.equals(functionName)) {
+    } else if (INIT_FRAMEWORKS.equals(functionName)) {
     	if (parameters.size() == 0) {
+    	    // auto add from extension-frameworks sub directory
           initFrameworksFromExtensionDirectory();
     	} else {
     		for(Object parameter : parameters) {
+    		  // get from a file or http
     			initFramework(parameter.toString());
     		}
     	}
@@ -177,7 +189,7 @@ public class FrameworksFunctions implements Function {
     }
   }
 
-  private Object importFunction(String functionName, List<Object> parameters)
+  private Object importFunctions(String functionName, List<Object> parameters)
       throws ParameterException, ParserException {
     this.checkParameters(parameters);
 
@@ -191,7 +203,7 @@ public class FrameworksFunctions implements Function {
     List<String> newChatMacros = new LinkedList<String>();
 
     String prefix = FunctionCaller.getParam(parameters, 0);
-    String frameworkName = FunctionCaller.getParam(parameters, 1);
+    String frameworkFunctionBundle = FunctionCaller.getParam(parameters, 1);
 
     if (!StringUtil.isEmpty(prefix)) {
       prefix = prefix + "_";
@@ -200,8 +212,8 @@ public class FrameworksFunctions implements Function {
     try {
       Framework framework =
           (Framework)
-              Class.forName(frameworkName.toString(), true, frameworksClassLoader).getDeclaredConstructor().newInstance();
-      MapTool.addLocalMessage("imported framework: "+frameworkName.toString());
+              Class.forName(frameworkFunctionBundle.toString(), true, frameworksClassLoader).getDeclaredConstructor().newInstance();
+      MapTool.addLocalMessage("imported framework: "+frameworkFunctionBundle.toString());
       Collection<? extends Function> functions = framework.getFunctions();
       Collection<? extends Macro> chatMacros = framework.getChatMacros();
 
@@ -228,15 +240,16 @@ public class FrameworksFunctions implements Function {
         newChatMacros.add(macroDefinition.name());
       }
     } catch (Exception e) {
-      throw new ParserException(e);
+      MapTool.addLocalMessage("could not load function bundle (maybe it's libary was not imported): " + frameworkFunctionBundle.toString());
+      return BigDecimal.ZERO;
     }
 
     String functions = newFunctionNames.stream().collect(Collectors.joining(", "));
     String macros = newChatMacros.stream().collect(Collectors.joining(", "));
     
     MapToolScriptSyntax.resetScriptSyntax();
-    MapTool.addLocalMessage("frameworkName defined chat macros: "+macros);
-    MapTool.addLocalMessage("frameworkName defined functions: "+functions);
+    MapTool.addLocalMessage(frameworkFunctionBundle + " defined chat macros: "+macros);
+    MapTool.addLocalMessage(frameworkFunctionBundle + " defined functions: "+functions);
     
     return BigDecimal.ONE;
   }
