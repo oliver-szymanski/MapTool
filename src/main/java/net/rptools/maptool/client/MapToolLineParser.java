@@ -198,7 +198,6 @@ public class MapToolLineParser {
   }
 
   public List<Function> getMacroFunctions() {
-    mapToolParserFunctions.add(TokenMoveFunctions.getInstance());
     return mapToolParserFunctions;
   }
 
