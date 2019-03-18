@@ -65,14 +65,14 @@ A new shift+ctrl+spacebar command along with a new pointer image is now availabl
 * [#237][i237] - Added support to use shift-enter to insert newlines into the command entry box (also known as the chat entry box)
 * [#239][i239] - MapToolScriptTokenMaker now handles function names with . notation and dynamically pulls in all functions names. TokenMakerMaker no longer needs to be ran upon changes to MTScript.
 * [#240][i240] - Macro Editor now has Auto-Completion for macro functions! A brief description and summary can be displayed (these will be added as time permits)
-* [#326][i326] - defineFunction with open edit window
-
 <<<<<<< HEAD
+* [#326][i326] - defineFunction with open edit window
+* [#324][i324] - fix output of getViewPort. This might break existing macro using workaround to interpret the broken result before the fix.
+
+[i324]: https://github.com/RPTools/maptool/issues/324
 [i326]: https://github.com/RPTools/maptool/issues/326
-=======
 [p283]: https://github.com/RPTools/maptool/pull/283
 [p294]: https://github.com/RPTools/maptool/pull/294
->>>>>>> ed2cd984af70564a8b8e952acdfa074323e75c48
 [i210]: https://github.com/RPTools/maptool/issues/210
 [i113]: https://github.com/JamzTheMan/MapTool/issues/113
 [i108]: https://github.com/JamzTheMan/MapTool/issues/108
