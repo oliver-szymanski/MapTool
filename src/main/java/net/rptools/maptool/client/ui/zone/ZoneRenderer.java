@@ -52,6 +52,7 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -2267,9 +2268,9 @@ public class ZoneRenderer extends JComponent
                 String distance = "";
                 if (walker != null) { // This wouldn't be true unless token.isSnapToGrid() &&
                   // grid.isPathingSupported()
-                  int distanceTraveled = walker.getDistance();
-                  if (distanceTraveled >= 1) {
-                    distance = Integer.toString(distanceTraveled);
+                  double distanceTraveled = walker.getDistance();
+                  if (distanceTraveled >= 0) {
+                    distance = NumberFormat.getInstance().format(distanceTraveled);
                   }
                 } else {
                   double c = 0;
@@ -2286,7 +2287,7 @@ public class ZoneRenderer extends JComponent
                   }
                   c /= zone.getGrid().getSize(); // Number of "cells"
                   c *= zone.getUnitsPerCell(); // "actual" distance traveled
-                  distance = String.format("%.1f", c);
+                  distance = NumberFormat.getInstance().format(c);
                 }
                 if (!distance.isEmpty()) {
                   delayRendering(new LabelRenderer(distance, x, y));
@@ -2638,7 +2639,7 @@ public class ZoneRenderer extends JComponent
     double iwidth = cwidth * size;
     double iheight = cheight * size;
 
-    String distanceText = "" + (int) distance;
+    String distanceText = NumberFormat.getInstance().format(distance);
     ScreenPoint sp = ScreenPoint.fromZonePoint(this, point);
 
     int cellX = (int) (sp.x - iwidth / 2);
