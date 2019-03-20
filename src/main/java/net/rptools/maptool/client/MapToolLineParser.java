@@ -41,7 +41,6 @@ import net.rptools.maptool.model.Player;
 import net.rptools.maptool.model.Token;
 import net.rptools.maptool.model.Zone;
 import net.rptools.parser.ParserException;
-import net.rptools.parser.VariableModifiers;
 import net.rptools.parser.VariableResolver;
 import net.rptools.parser.function.Function;
 import net.sf.json.JSONArray;
@@ -1636,18 +1635,18 @@ public class MapToolLineParser {
     try {
       String macroOutput = null;
 
-			try {
-				macroOutput = runMacroBlock(macroResolver, tokenInContext, macroBody, macroContext);
-				// Copy the return value of the macro into our current variable scope.
-			  resolver.setVariable("macro.return", macroResolver.getVariable("macro.return"));
-			} catch (ReturnFunctionException returnEx) {
-				Object result = returnEx.getResult();
-				if (result != null) {
-					resolver.setVariable("macro.return", result);
-					macroOutput = result.toString();
-				}
-			}
-      
+      try {
+        macroOutput = runMacroBlock(macroResolver, tokenInContext, macroBody, macroContext);
+        // Copy the return value of the macro into our current variable scope.
+        resolver.setVariable("macro.return", macroResolver.getVariable("macro.return"));
+      } catch (ReturnFunctionException returnEx) {
+        Object result = returnEx.getResult();
+        if (result != null) {
+          resolver.setVariable("macro.return", result);
+          macroOutput = result.toString();
+        }
+      }
+
       if (macroOutput != null) {
         // Note! Its important that trim is not used to replace the following two lines.
         // If you use String.trim() you may inadvertnatly remove the special characters
