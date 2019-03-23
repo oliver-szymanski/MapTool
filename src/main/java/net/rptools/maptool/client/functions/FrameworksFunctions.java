@@ -119,11 +119,6 @@ public class FrameworksFunctions implements Function {
     // add the default functions without any prefix
     frameworkFunctions.add(this);
 
-    String[] functions =
-        new String[] {
-          IMPORT_FUNCTIONS_BUNDLE, INIT_FRAMEWORKS, RESET_FRAMEWORKS, UNPACK_ARGS_FUNCTION_NAME
-        };
-    ;
     for (String function : getFrameworksFunctionNames()) {
       frameworkFunctionsAliasMap.put(function, this);
       frameworkAliasPrefixMap.put(function, function);
@@ -539,6 +534,7 @@ public class FrameworksFunctions implements Function {
     private static volatile PermissionCollection perms;
 
     // in case more checks based on domain/codeSource are needed
+    @SuppressWarnings("unused")
     private ProtectionDomain domain;
 
     public AllPolicy(ProtectionDomain domain) {

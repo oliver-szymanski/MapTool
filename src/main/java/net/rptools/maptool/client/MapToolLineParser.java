@@ -57,6 +57,7 @@ public class MapToolLineParser {
   /** MapTool functions to add to the parser. */
   private static final List<Function> mapToolParserFunctions =
       Stream.of(
+              FrameworksFunctions.getInstance(),
               AbortFunction.getInstance(),
               AssertFunction.getInstance(),
               AddAllToInitiativeFunction.getInstance(),
