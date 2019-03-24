@@ -15,6 +15,9 @@
 package net.rptools.maptool.client.functions;
 
 import com.twelvemonkeys.lang.StringUtil;
+
+import de.jadebringer.maptool.frameworks.base.chatmacros.CallMacro;
+
 import java.io.File;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
@@ -40,6 +43,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.PropertyPermission;
 import java.util.stream.Collectors;
 import net.rptools.maptool.client.MapTool;
 import net.rptools.maptool.client.MapToolMacroContext;
@@ -67,15 +71,27 @@ public class FrameworksFunctions implements Function {
   };
 
   private static final AccessControlContext accessControlContextForExtensionFunctions;
+  public static final AccessControlContext accessControlContextAllAllowed;
 
   static {
     // initialization of the allowed permissions
     PermissionCollection allowedPermissions = new Permissions();
+    allowedPermissions.add(new PropertyPermission("*", "read"));
+
     // allowedPermissions.add(new RuntimePermission("accessDeclaredMembers"));
     // ... <many more permissions here> ...
     accessControlContextForExtensionFunctions =
         new AccessControlContext(
             new ProtectionDomain[] {new ProtectionDomain(null, allowedPermissions)});
+    
+    PermissionCollection allPermissions = new Permissions();
+    allPermissions.add(new AllPermission());
+
+    // allowedPermissions.add(new RuntimePermission("accessDeclaredMembers"));
+    // ... <many more permissions here> ...
+    accessControlContextAllAllowed =
+        new AccessControlContext(
+            new ProtectionDomain[] {new ProtectionDomain(null, allPermissions)});
   }
 
   private final int minParameters;
@@ -129,7 +145,8 @@ public class FrameworksFunctions implements Function {
       // make sure at least some default policy/security manager is setup
       // one is required to have access control on extensions code
       // by default Java does not have one
-      Policy.setPolicy(new AllPolicy(this.getClass().getProtectionDomain()));
+//      Policy.setPolicy(new AllPolicy(this.getClass().getProtectionDomain()));
+      Policy.setPolicy(new AllPolicy(MapTool.class.getProtectionDomain()));
       System.setSecurityManager(new SecurityManagerPackageAccess());
     }
 
@@ -211,7 +228,7 @@ public class FrameworksFunctions implements Function {
     }
 
     if (IMPORT_FUNCTIONS_BUNDLE.equals(functionName)) {
-      return importFunctions(IMPORT_FUNCTIONS_BUNDLE, parameters);
+      return importFunctionsBundle(IMPORT_FUNCTIONS_BUNDLE, parameters);
     } else if (RESET_FRAMEWORKS.equals(functionName)) {
       init();
       return BigDecimal.ONE;
@@ -231,7 +248,7 @@ public class FrameworksFunctions implements Function {
     }
   }
 
-  private Object importFunctions(String functionName, List<Object> parameters)
+  private Object importFunctionsBundle(String functionName, List<Object> parameters)
       throws ParameterException, ParserException {
     this.checkParameters(parameters);
 
@@ -335,7 +352,7 @@ public class FrameworksFunctions implements Function {
       // SecurityManagerPackageAccess
       // (Functions loaded as extension but inside the main libs are
       // having normal access control)
-      result =
+      result = 
           AccessController.doPrivileged(
               new PrivilegedExceptionAction<>() {
                 public Object run() throws Exception {
@@ -355,10 +372,10 @@ public class FrameworksFunctions implements Function {
       String macroName,
       MapToolMacroContext executionContext) {
     try {
-      // run extension function in a controlled environment with restrictions
-      // permissions are given via the accessControlContext
+      // run extension function in a controlled environment with restrictions.
+      // permissions are given via the accessControlContext.
       // package access is controlled by permissions and the exceptions in
-      // SecurityManagerPackageAccess
+      // SecurityManagerPackageAccess.
       // (Functions loaded as extension but inside the main libs are
       // having normal access control)
       AccessController.doPrivileged(
@@ -436,18 +453,18 @@ public class FrameworksFunctions implements Function {
 
   protected static class FrameworkClassLoader extends URLClassLoader {
 
-    public FrameworkClassLoader(URL[] urls, ClassLoader parent) {
-      super(urls);
-      // public FrameworkClassLoader(URL extensionOrigin) {
-      // super(new URL[] { extensionOrigin });
+    private final List<CodeSource> origins = new LinkedList<>();
+    private final PermissionCollection perms = new Permissions();
+    private final PermissionCollection allPermissions = new Permissions();
 
-      allPermissions.add(new AllPermission());
+    public FrameworkClassLoader(URL[] urls, ClassLoader parent) {
+      super(urls, parent);
+
+      //allPermissions.add(new AllPermission());
 
       try {
         for (URL url : urls) {
           CodeSource origin = new CodeSource(Objects.requireNonNull(url), (Certificate[]) null);
-          //          perms.add(new FilePermission(baseDir.toString().concat("/-"),
-          // "read,write,delete"));
           copyPermissions(super.getPermissions(origin), perms);
           origins.add(origin);
         }
@@ -462,11 +479,7 @@ public class FrameworksFunctions implements Function {
         dst.add(e.nextElement());
       }
     }
-
-    private final List<CodeSource> origins = new LinkedList<>();
-    private final PermissionCollection perms = new Permissions();
-    private final PermissionCollection allPermissions = new Permissions();
-
+    
     @Override
     public void addURL(URL url) {
       super.addURL(url);
@@ -492,13 +505,31 @@ public class FrameworksFunctions implements Function {
     public static Object callFunction(
         String functionName, Function f, Parser parser, Object... parameters)
         throws ParserException {
-      return f.evaluate(parser, functionName, Arrays.asList(parameters));
+      try {
+        return AccessController.doPrivileged(
+            new PrivilegedExceptionAction<>() {
+              public Object run() throws Exception {
+                return f.evaluate(parser, functionName, Arrays.asList(parameters));
+              }
+            });
+      } catch (PrivilegedActionException e) {
+        throw new ParserException(e);
+      }
     }
 
     public static Object callFunction(String functionName, Parser parser, Object... parameters)
         throws ParserException {
       Function f = parser.getFunction(functionName);
-      return f.evaluate(parser, functionName, Arrays.asList(parameters));
+      try {
+        return AccessController.doPrivileged(
+            new PrivilegedExceptionAction<>() {
+              public Object run() throws Exception {
+                return f.evaluate(parser, functionName, Arrays.asList(parameters));
+              }
+            });
+      } catch (PrivilegedActionException e) {
+        throw new ParserException(e);
+      }
     }
 
     public static List<Object> toObjectList(Object... parameters) {
@@ -557,7 +588,7 @@ public class FrameworksFunctions implements Function {
 
   private class SecurityManagerPackageAccess extends SecurityManager {
 
-    // checkPackageAccess needs to be overriden
+    // checkPackageAccess needs to be overridden
     @Override
     public void checkPackageAccess(String pkg) {
       // super will not check the AccessControlContext for permission
@@ -571,6 +602,8 @@ public class FrameworksFunctions implements Function {
       // to override.
       if (pkg.startsWith("net.rptools.")
           && !pkg.equals("net.rptools.maptool.client")
+          && !pkg.equals("net.rptools.maptool.client.ui.zone")
+          && !pkg.equals("net.rptools.maptool.client.ui.commandpanel")
           && !pkg.equals("net.rptools.maptool.client.functions")
           && !pkg.equals("net.rptools.maptool.model")) {
         checkPermission(new RuntimePermission("accessClassInPackage." + pkg));
