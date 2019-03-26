@@ -16,8 +16,6 @@ package net.rptools.maptool.client.functions;
 
 import com.twelvemonkeys.lang.StringUtil;
 
-import de.jadebringer.maptool.frameworks.base.chatmacros.CallMacro;
-
 import java.io.File;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
@@ -98,7 +96,8 @@ public class FrameworksFunctions implements Function {
   private final int maxParameters;
   private final boolean deterministic;
 
-  private FrameworkClassLoader frameworksClassLoader;
+  private List<FrameworkClassLoader> frameworksClassLoader = new LinkedList<>();
+  private Map<FrameworkClassLoader, String> frameworksClassLoaderToLibs = new HashMap<>();;
 
   private FrameworksFunctions() {
     this.minParameters = 2;
@@ -150,8 +149,8 @@ public class FrameworksFunctions implements Function {
       System.setSecurityManager(new SecurityManagerPackageAccess());
     }
 
-    frameworksClassLoader =
-        new FrameworkClassLoader(new URL[] {}, this.getClass().getClassLoader());
+    frameworksClassLoader.clear();
+    frameworksClassLoaderToLibs.clear();
   }
 
   private void initFrameworksFromExtensionDirectory() {
@@ -202,7 +201,14 @@ public class FrameworksFunctions implements Function {
       return;
     }
     MapTool.addLocalMessage("init extension framework: " + frameworkLibURL.toString());
-    frameworksClassLoader.addURL(frameworkLibURL);
+    
+    FrameworkClassLoader frameworkClassLoader = new FrameworkClassLoader(new URL[] {}, this.getClass().getClassLoader());
+    frameworkClassLoader.addURL(frameworkLibURL);
+    
+    // add classloader to front of the list so that a later added one 
+    // can override function/macro definitions
+    frameworksClassLoader.add(0, frameworkClassLoader);
+    frameworksClassLoaderToLibs.put(frameworkClassLoader, frameworkLibURL.getFile());
   }
 
   private final List<Function> frameworkFunctions = new LinkedList<>();
@@ -269,12 +275,44 @@ public class FrameworksFunctions implements Function {
     }
 
     try {
-      Framework framework =
-          (Framework)
-              Class.forName(frameworkFunctionBundle.toString(), true, frameworksClassLoader)
-                  .getDeclaredConstructor()
-                  .newInstance();
-      MapTool.addLocalMessage("imported bundle: " + frameworkFunctionBundle.toString());
+      
+      Framework framework = null;
+      
+      // check all extension lib classloader in order
+      for(FrameworkClassLoader frameworkClassLoader : frameworksClassLoader) {
+        try {
+          framework =
+              (Framework)
+                  Class.forName(frameworkFunctionBundle.toString(), true, frameworkClassLoader)
+                      .getDeclaredConstructor()
+                      .newInstance();
+          MapTool.addLocalMessage("imported bundle: '" + frameworkFunctionBundle.toString() + "' from '"
+              +frameworksClassLoaderToLibs.get(frameworkClassLoader) + "'");
+        } catch (Exception e) {
+          // safe to ignore
+        }        
+      }
+      
+      // try current classloader if nothing yet found
+      if (framework == null) {
+        try {
+          framework =
+              (Framework)
+                  Class.forName(frameworkFunctionBundle.toString(), true, this.getClass().getClassLoader())
+                      .getDeclaredConstructor()
+                      .newInstance();
+          MapTool.addLocalMessage("imported bundle: '" + frameworkFunctionBundle.toString() + "' from base libraries.");
+        } catch (Exception e) {
+          // safe to ignore
+        }  
+      }
+       
+      // check if bundle was found
+      if (framework == null) {
+        MapTool.addLocalMessage("bundle not found in any lib: " + frameworkFunctionBundle.toString());
+        return BigDecimal.ZERO;
+      }
+      
       Collection<? extends Function> functions = framework.getFunctions();
       Collection<? extends Macro> chatMacros = framework.getChatMacros();
 
@@ -296,7 +334,6 @@ public class FrameworksFunctions implements Function {
       for (Macro chatMacro : chatMacros) {
         MacroDefinition macroDefinition = chatMacro.getClass().getAnnotation(MacroDefinition.class);
         if (macroDefinition == null) continue;
-
         MacroManager.registerMacro(chatMacro);
         newChatMacros.add(macroDefinition.name());
       }
@@ -358,8 +395,8 @@ public class FrameworksFunctions implements Function {
                 public Object run() throws Exception {
                   return function.evaluate(parser, alias, parameters);
                 }
-              },
-              accessControlContextForExtensionFunctions);
+              } 
+              );//accessControlContextForExtensionFunctions);
     } catch (PrivilegedActionException e) {
       throw new RuntimeException(e);
     }
@@ -459,8 +496,7 @@ public class FrameworksFunctions implements Function {
 
     public FrameworkClassLoader(URL[] urls, ClassLoader parent) {
       super(urls, parent);
-
-      //allPermissions.add(new AllPermission());
+      allPermissions.add(new AllPermission());
 
       try {
         for (URL url : urls) {
@@ -591,22 +627,27 @@ public class FrameworksFunctions implements Function {
     // checkPackageAccess needs to be overridden
     @Override
     public void checkPackageAccess(String pkg) {
-      // super will not check the AccessControlContext for permission
-      // so needs to be overridden and more checks added.
-      // otherwise too much is granted (it only checks based on java modules)
-      super.checkPackageAccess(pkg);
-
-      // restrict access to MapTool packages, except some.
-      // core will be allowed as it has all permissions anyway.
-      // in case class access is required check the other permission methods
-      // to override.
-      if (pkg.startsWith("net.rptools.")
-          && !pkg.equals("net.rptools.maptool.client")
-          && !pkg.equals("net.rptools.maptool.client.ui.zone")
-          && !pkg.equals("net.rptools.maptool.client.ui.commandpanel")
-          && !pkg.equals("net.rptools.maptool.client.functions")
-          && !pkg.equals("net.rptools.maptool.model")) {
-        checkPermission(new RuntimePermission("accessClassInPackage." + pkg));
+      try {
+        // super will not check the AccessControlContext for permission
+        // so needs to be overridden and more checks added.
+        // otherwise too much is granted (it only checks based on java modules)
+        super.checkPackageAccess(pkg);
+  
+        // restrict access to MapTool packages, except some.
+        // core will be allowed as it has all permissions anyway.
+        // in case class access is required check the other permission methods
+        // to override.
+        if (pkg.startsWith("net.rptools.")
+            && !pkg.equals("net.rptools.maptool.client")
+            && !pkg.equals("net.rptools.maptool.client.ui.zone")
+            && !pkg.equals("net.rptools.maptool.client.ui.commandpanel")
+            && !pkg.equals("net.rptools.maptool.client.functions")
+            && !pkg.equals("net.rptools.maptool.model")) {
+          checkPermission(new RuntimePermission("accessClassInPackage." + pkg));
+        }
+      } catch (Exception e) {
+        //MapTool.addLocalMessage("Permission error: " + e.getMessage());
+        //throw e;
       }
     }
   }
