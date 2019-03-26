@@ -419,7 +419,7 @@ public class PersistenceUtil {
             String zonePath =
                 joinFilePaths(
                     ZONES_DIRECTORY,
-                    fixFileName(zone.getName()) + "_" + fixFileName(zone.getId().toString()));
+                    fixFileName(zone.getName()) + "_" + zone.getId().toString());
 
             // save tokens in zone
             List<String> tokenFiles = new LinkedList<String>();
@@ -427,13 +427,12 @@ public class PersistenceUtil {
               String tokenPath =
                   joinFilePaths(
                       TOKENS_DIRECTORY,
-                      fixFileName(token.getName()) + "_" + fixFileName(token.getId().toString()));
+                      fixFileName(token.getName()) + "_" + token.getId().toString());
               String tokenFile =
                   joinFilePaths(
                       zonePath,
                       tokenPath,
                       TOKEN_FILE_PREFIX + fixFileName(token.getName()) + TOKEN_FILE_SUFFIX);
-              tokenFiles.add(tokenFile);
 
               // save token macros
               List<MacroFileWrapper> tokenMacroFiles = new LinkedList<MacroFileWrapper>();
@@ -579,9 +578,6 @@ public class PersistenceUtil {
 
   private static final Pattern PATTERN = Pattern.compile("[^A-Za-z0-9_\\-]");
 
-  // max name for each file path component that is checked
-  private static final int MAX_LENGTH = 50;
-
   public static String joinFilePaths(String... paths) {
     StringBuilder sb = new StringBuilder();
     for (String path : paths) {
@@ -603,9 +599,11 @@ public class PersistenceUtil {
     Matcher m = PATTERN.matcher(in);
 
     while (m.find()) {
-      // Convert matched character to percent-encoded.
+      // Convert matched character.
       // which is everything that is not allowed
-      String replacement = "_"; // "%" + Integer.toHexString(m.group().charAt(0)).toUpperCase();
+      String replacement = "_"; 
+      // this would map it to percent encoding, not really needed for us
+      // "%" + Integer.toHexString(m.group().charAt(0)).toUpperCase();
       m.appendReplacement(sb, replacement);
     }
     m.appendTail(sb);
@@ -613,7 +611,7 @@ public class PersistenceUtil {
     String encoded = sb.toString();
 
     // Truncate the string.
-    int end = Math.min(encoded.length(), MAX_LENGTH);
+    int end = Math.min(encoded.length(), 24);
     return encoded.substring(0, end);
   }
 
