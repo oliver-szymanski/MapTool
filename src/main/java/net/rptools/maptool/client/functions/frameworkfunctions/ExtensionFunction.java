@@ -36,8 +36,8 @@ public abstract class ExtensionFunction {
       if (functionName.equals(alias.getFunctionName())) {
         if ((countParameters < alias.getMinParameters()) || ((alias.getMaxParameters() != -1) && (parameters.size() > alias.getMaxParameters()))) {
           throw new ParameterException(String.format(
-              "Invalid number of parameters %d, expected %s", 
-              new Object[] { Integer.valueOf(countParameters), formatExpectedParameterString(alias) }));
+              "Function call %s: Invalid number of parameters %d, expected %s", 
+              new Object[] { functionName, Integer.valueOf(countParameters), formatExpectedParameterString(alias) }));
         }
       }
     }
