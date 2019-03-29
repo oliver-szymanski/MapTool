@@ -1,3 +1,37 @@
+MapTool 1.5.1
+=====
+A minor update to 1.5.0 consisting of bug fixes and small enhancements.
+
+___
+
+Bug Fixes
+-----
+* [#107][i107] - getTokenNativeHeight/Width Script Function
+* [#189][i189] - transferVBL function is misnamed
+* [#278][i278] - Fix existing unit tests and enable unit tests in build
+* [#326][i326] - defineFunction causes error with macro edit window open
+* [#324][i324] - fix output of setViewArea. This might break existing macro using workaround to interpret the broken result before the fix.
+
+Enhancements
+-----
+* [#50][i50] - Decimal digits in map properties (distance per cell)
+* [#255][i255] - Enable Delete Button on Draw Explore
+* [#289][i255] - token opacity slider needs preview
+* [#332][i332] - Allow to set color for personal lights in campaign Sight types
+
+
+
+[i50]: https://github.com/RPTools/maptool/issues/50 
+[i107]: https://github.com/RPTools/maptool/issues/107 
+[i189]: https://github.com/RPTools/maptool/issues/189
+[i255]: https://github.com/RPTools/maptool/issues/255
+[i278]: https://github.com/RPTools/maptool/issues/278
+[i255]: https://github.com/RPTools/maptool/issues/255
+[i326]: https://github.com/RPTools/maptool/issues/326
+[i324]: https://github.com/RPTools/maptool/issues/324
+[i332]: https://github.com/RPTools/maptool/issues/332
+
+
 MapTool 1.5.0
 =====
 A major update pulling in almost a years worth of enhancements and bug fixes from the Nerps fork back to the main MapTool repository. This will bring us back to a single build for users once again while we continue working on MapTool 2.0.
