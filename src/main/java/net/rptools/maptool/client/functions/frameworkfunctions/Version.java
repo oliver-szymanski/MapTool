@@ -20,12 +20,6 @@ public class Version implements Comparable<Version> {
    */
   protected final String _snapshotInfo;
 
-  /**
-   * @deprecated Use variant that takes group and artifact ids
-   * 
-   * @since 2.1
-   */
-  @Deprecated
   public Version(int major, int minor, int patchLevel, String snapshotInfo)
   {
       this(major, minor, patchLevel, snapshotInfo, null, null);

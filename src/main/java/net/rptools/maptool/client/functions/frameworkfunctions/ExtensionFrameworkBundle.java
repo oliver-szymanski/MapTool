@@ -6,6 +6,10 @@ public abstract class ExtensionFrameworkBundle {
 
   private Version version;
 
+  public ExtensionFrameworkBundle(Version version) {
+    this.version = version;
+  }
+  
   public Version version() {
     return version;
   }

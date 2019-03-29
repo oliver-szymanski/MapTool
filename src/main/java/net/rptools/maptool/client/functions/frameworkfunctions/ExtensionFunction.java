@@ -57,6 +57,15 @@ public abstract class ExtensionFunction {
   
   public final Object execute(Parser parser, String functionName, List<Object> parameters) throws ParserException{
     
+    boolean notFound = true;
+    for(Alias alias : extensionFunctionAliases) {
+      if (alias.functionName.equals(functionName)) {
+        notFound = false;
+        checkParameters(parser, functionName, parameters);
+      }
+    }
+    if (notFound) { throw new ParserException("not found function: "+functionName); }
+    
     if (trustedRequired && !MapTool.getParser().isMacroTrusted()) {
       throw new ParserException(I18N.getText("macro.function.general.noPerm", functionName));
     }

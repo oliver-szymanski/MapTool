@@ -403,7 +403,7 @@ public class FrameworksFunctions implements Function {
     // cache current alias list
     String[] extensionAliases = frameworkFunctionsAliasMap.keySet().toArray(new String[] {});
     String[] frameworkAliases = getFrameworksFunctionNames();
-    String[] allAliases = new String[extensionAliases.length + extensionAliases.length];
+    String[] allAliases = new String[extensionAliases.length + frameworkAliases.length];
     System.arraycopy(extensionAliases, 0, allAliases, 0, extensionAliases.length);
     System.arraycopy(frameworkAliases, 0, allAliases, extensionAliases.length, frameworkAliases.length);
     this.aliases = allAliases;
@@ -425,8 +425,7 @@ public class FrameworksFunctions implements Function {
     ExtensionFunction function = frameworkFunctionsAliasMap.get(functionName);
 
     if (function != null) {
-      Object result = executeExtensionFunctionWithAccessControl(parser, parameters, aliasWithoutPrefix, function);
-      return result;
+      return function.execute(parser, aliasWithoutPrefix, parameters);
     }
 
     return BigDecimal.ZERO;
@@ -438,7 +437,7 @@ public class FrameworksFunctions implements Function {
     }
     
     try {
-      return executePrivileged(new Runnable<Boolean>() {
+      return executePrivileged(new Run<Boolean>() {
         public Boolean run() {
           return buttonFrames.get(frame).isVisible();
         }
@@ -466,7 +465,7 @@ public class FrameworksFunctions implements Function {
     }
     
     try {
-      return executePrivileged(new Runnable<Boolean>() {
+      return executePrivileged(new Run<Boolean>() {
         public Boolean run() {
           return buttonFrames.get(frame).show();
         }
@@ -482,7 +481,7 @@ public class FrameworksFunctions implements Function {
     }
     
     try {
-      return executePrivileged(new Runnable<Boolean>() {
+      return executePrivileged(new Run<Boolean>() {
         public Boolean run() {
           return buttonFrames.get(frame).hide();
         }
@@ -492,7 +491,7 @@ public class FrameworksFunctions implements Function {
     }
   }
 
-  static <T> T executePrivileged(Runnable<T> runnable) throws Exception {
+  static <T> T executePrivileged(Run<T> runnable) throws Exception {
     // run the runnable in a controlled environment without restrictions
     T result = AccessController.doPrivileged((PrivilegedExceptionAction<T>) () -> {
         return runnable.run();
@@ -500,7 +499,7 @@ public class FrameworksFunctions implements Function {
     return result;
   }
   
-  static <T> T executeNotPrivileged(Runnable<T> runnable) {
+  static <T> T executeNotPrivileged(Run<T> runnable) {
     T result = null;
     try {
       // run runnable in a controlled environment with restrictions
@@ -526,7 +525,7 @@ public class FrameworksFunctions implements Function {
   static Object executeExtensionFunctionWithAccessControl(
       Parser parser, List<Object> parameters, String alias, ExtensionFunction function) throws ParserException {
     Object result = executeNotPrivileged(
-          new Runnable<Object>() {
+          new Run<Object>() {
                 public Object run() throws ParserException {
                   return function.run(parser, alias, parameters);
                 }
@@ -540,7 +539,7 @@ public class FrameworksFunctions implements Function {
       String macroName,
       MapToolMacroContext executionContext) {
     executeNotPrivileged(
-      new Runnable<Object>() {
+      new Run<Object>() {
             public Object run() throws ParserException {
               chatMacro.run(context, macroName, executionContext);
               return null;
@@ -551,7 +550,7 @@ public class FrameworksFunctions implements Function {
   static void executeExtensionFunctionButtonWithAccessControl(
       ExtensionFunctionButton functionButton) {
     executeNotPrivileged(
-          new Runnable<Object>() {
+          new Run<Object>() {
             public Object run() throws ParserException {
               MapToolVariableResolver resolver = new MapToolVariableResolver(null);
               ExpressionParser parser = new ExpressionParser(resolver);
@@ -635,7 +634,7 @@ public class FrameworksFunctions implements Function {
     }
   }
   
-  public static interface Runnable<T> {
+  public static interface Run<T> {
     T run() throws Exception;
   }
 }
