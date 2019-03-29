@@ -151,9 +151,9 @@ public class Zone extends BaseModel {
   private List<DrawnElement> backgroundDrawables = new LinkedList<DrawnElement>();
 
   private final Map<GUID, Label> labels = new LinkedHashMap<GUID, Label>();
-  private final Map<GUID, Token> tokenMap = new HashMap<GUID, Token>();
+  private Map<GUID, Token> tokenMap = new HashMap<GUID, Token>();
   private Map<GUID, ExposedAreaMetaData> exposedAreaMeta = new HashMap<GUID, ExposedAreaMetaData>();
-  private final List<Token> tokenOrderedList = new LinkedList<Token>();
+  private List<Token> tokenOrderedList = new LinkedList<Token>();
 
   private InitiativeList initiativeList = new InitiativeList(this);
 
@@ -287,7 +287,11 @@ public class Zone extends BaseModel {
    * the old one being passed in, if you have any data that needs to transfer over, you will need to
    * manually copy it as is done below for various items.
    */
-  public Zone(Zone zone) {
+  public Zone(Zone zone, boolean copyId) {
+    if (copyId && zone.grid != null) {
+      id = zone.id;
+    }
+
     backgroundPaint = zone.backgroundPaint;
     mapAsset = zone.mapAsset;
     fogPaint = zone.fogPaint;
@@ -351,7 +355,7 @@ public class Zone extends BaseModel {
       Iterator<GUID> i = zone.tokenMap.keySet().iterator();
       while (i.hasNext()) {
         Token old = zone.tokenMap.get(i.next());
-        Token token = new Token(old);
+        Token token = new Token(old, copyId);
         if (old.getExposedAreaGUID() != null) {
           GUID guid = new GUID();
           token.setExposedAreaGUID(guid);
@@ -392,6 +396,11 @@ public class Zone extends BaseModel {
   }
 
   public GUID getId() {
+    return id;
+  }
+
+  public GUID resetId() {
+    id = new GUID();
     return id;
   }
 
@@ -1128,7 +1137,6 @@ public class Zone extends BaseModel {
    */
   public void putToken(Token token) {
     boolean newToken = !tokenMap.containsKey(token.getId());
-
     tokenMap.put(token.getId(), token);
 
     // LATER: optimize this
@@ -1717,6 +1725,13 @@ public class Zone extends BaseModel {
   protected Object readResolve() {
     super.readResolve();
 
+    if (tokenOrderedList == null) {
+      tokenOrderedList = new LinkedList<Token>();
+    }
+    if (tokenMap == null) {
+      tokenMap = new HashMap<GUID, Token>();
+    }
+
     // 1.3b76 -> 1.3b77
     // adding the exposed area for Individual FOW
     if (exposedAreaMeta == null) {
@@ -1755,30 +1770,39 @@ public class Zone extends BaseModel {
         visionType = VisionType.OFF;
       }
     }
-    // Look for the bizarre z-ordering disappearing trick
-    boolean foundZero = false;
-    boolean fixZOrder = false;
-    for (Token token : tokenOrderedList) {
-      if (token.getZOrder() == 0) {
-        if (foundZero) {
-          fixZOrder = true;
-          break;
-        }
-        foundZero = true;
-      }
-    }
-    if (fixZOrder) {
-      int z = 0;
-      for (Token token : tokenOrderedList) {
-        token.setZOrder(z++);
-      }
-    }
+
+    fixZOrder();
+
     // Transient "undo" field added in 1.3.b88
     // This will be true; it's just in case we decide to make it persistent in the future
     if (undo == null) {
       undo = new UndoPerZone(this);
     }
     return this;
+  }
+
+  public void fixZOrder() {
+    // Look for the bizarre z-ordering disappearing trick
+    boolean foundZero = false;
+    boolean fixZOrder = false;
+
+    if (tokenOrderedList != null) {
+      for (Token token : tokenOrderedList) {
+        if (token.getZOrder() == 0) {
+          if (foundZero) {
+            fixZOrder = true;
+            break;
+          }
+          foundZero = true;
+        }
+      }
+      if (fixZOrder) {
+        int z = 0;
+        for (Token token : tokenOrderedList) {
+          token.setZOrder(z++);
+        }
+      }
+    }
   }
 
   public Map<GUID, ExposedAreaMetaData> getExposedAreaMetaData() {
@@ -1828,5 +1852,9 @@ public class Zone extends BaseModel {
    */
   public void setWaypointExposureToggle(boolean toggle) {
     exposeFogAtWaypoints = toggle;
+  }
+
+  public Map<GUID, Token> getTokenMap() {
+    return tokenMap;
   }
 }

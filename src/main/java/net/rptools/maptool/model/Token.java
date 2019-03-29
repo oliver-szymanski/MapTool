@@ -35,6 +35,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -244,8 +245,12 @@ public class Token extends BaseModel implements Cloneable {
 
   private HeroLabData heroLabData;
 
-  public Token(Token token) {
+  public Token(Token token, boolean copyId) {
     this(token.name, token.getImageAssetId());
+    if (copyId && token.id != null) {
+      id = token.id;
+    }
+
     currentImageAsset = token.currentImageAsset;
 
     x = token.x;
@@ -324,7 +329,17 @@ public class Token extends BaseModel implements Cloneable {
       getPropertyMap().putAll(token.propertyMapCI);
     }
     if (token.macroPropertiesMap != null) {
-      macroPropertiesMap = new HashMap<Integer, Object>(token.macroPropertiesMap);
+
+      if (!copyId) {
+        macroPropertiesMap = new HashMap<Integer, Object>();
+        for (Entry<Integer, Object> macroEntry : token.macroPropertiesMap.entrySet()) {
+          MacroButtonProperties macro =
+              new MacroButtonProperties(this, (MacroButtonProperties) macroEntry.getValue());
+          macroPropertiesMap.put(macroEntry.getKey(), macro);
+        }
+      } else {
+        macroPropertiesMap = new HashMap<Integer, Object>(token.macroPropertiesMap);
+      }
     }
     // convert old-style macros
     if (token.macroMap != null) {
@@ -845,6 +860,9 @@ public class Token extends BaseModel implements Cloneable {
 
   @Override
   public int hashCode() {
+    if (id == null) {
+      return -1;
+    }
     return id.hashCode();
   }
 
@@ -936,11 +954,23 @@ public class Token extends BaseModel implements Cloneable {
   }
 
   public GUID getId() {
+    if (id == null) {
+      resetId();
+    }
     return id;
   }
 
-  public void setId(GUID id) {
-    this.id = id;
+  public GUID resetId() {
+    id = new GUID();
+    return id;
+  }
+
+  /**
+   * needed so that when copy/pasting the ID can be cleared on copy and a new one is generated for
+   * every paste.
+   */
+  public void clearID() {
+    id = null;
   }
 
   public int getX() {
@@ -1478,14 +1508,29 @@ public class Token extends BaseModel implements Cloneable {
     // used by the token edit dialog, which will handle resetting panels and putting token to
     // zone
     macroPropertiesMap.clear();
+    List<MacroButtonProperties> macrosWithDuplicateIndex = new LinkedList<>();
+    int index = -1;
     for (MacroButtonProperties macro : newMacroList) {
       if (macro.getLabel() == null
           || macro.getLabel().trim().length() == 0
           || macro.getCommand().trim().length() == 0) {
         continue;
       }
-      macroPropertiesMap.put(macro.getIndex(), macro);
+      if (macro.getIndex() == -1 || macroPropertiesMap.containsKey(macro.getIndex())) {
+        macrosWithDuplicateIndex.add(macro);
+      } else {
+        macroPropertiesMap.put(macro.getIndex(), macro);
+        index = Integer.max(index, macro.getIndex());
+      }
+      // Allows the token macro panels to update only if a macro changes
+      fireModelChangeEvent(new ModelChangeEvent(this, ChangeEvent.MACRO_CHANGED, id));
+    }
 
+    // fill macros with already used index with a new index and add again
+    for (MacroButtonProperties macro : macrosWithDuplicateIndex) {
+      index++;
+      macro.setIndex(index);
+      macroPropertiesMap.put(macro.getIndex(), macro);
       // Allows the token macro panels to update only if a macro changes
       fireModelChangeEvent(new ModelChangeEvent(this, ChangeEvent.MACRO_CHANGED, id));
     }
@@ -1877,6 +1922,10 @@ public class Token extends BaseModel implements Cloneable {
     // 1.3 b77
     if (exposedAreaGUID == null) {
       exposedAreaGUID = new GUID();
+    }
+
+    if (macroPropertiesMap == null) {
+      macroPropertiesMap = new HashMap<Integer, Object>();
     }
     return this;
   }

@@ -1,3 +1,13 @@
+Feature Branch
+=====
+Feature branch to test Campaign Dir
+
+Enhancements
+-----
+* [#102][i102] - Save campaigns as directory structure, add new exports
+
+[i102]: https://github.com/RPTools/maptool/issues/102
+
 MapTool 1.5.1
 =====
 A minor update to 1.5.0 consisting of bug fixes and small enhancements.
@@ -20,8 +30,6 @@ Enhancements
 * [#289][i255] - token opacity slider needs preview
 * [#332][i332] - Allow to set color for personal lights in campaign Sight types
 
-
-
 [i50]: https://github.com/RPTools/maptool/issues/50 
 [i107]: https://github.com/RPTools/maptool/issues/107 
 [i189]: https://github.com/RPTools/maptool/issues/189
@@ -31,7 +39,7 @@ Enhancements
 [i326]: https://github.com/RPTools/maptool/issues/326
 [i324]: https://github.com/RPTools/maptool/issues/324
 [i332]: https://github.com/RPTools/maptool/issues/332
-
+[i392]: https://github.com/RPTools/maptool/issues/392
 
 MapTool 1.5.0
 =====
@@ -154,4 +162,3 @@ A new shift+ctrl+spacebar command along with a new pointer image is now availabl
 [i239]: https://github.com/RPTools/maptool/issues/239
 [i240]: https://github.com/RPTools/maptool/issues/240
 [i232]: https://github.com/RPTools/maptool/issues/232
-[i392]: https://github.com/RPTools/maptool/issues/392
