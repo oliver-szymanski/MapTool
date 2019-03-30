@@ -72,7 +72,7 @@ public class ComponentResizer extends MouseAdapter
    */
   public ComponentResizer()
   {
-    this(new Insets(5, 5, 5, 5), new Dimension(1, 1));
+    this(new Insets(5, 5, 5, 5), new Dimension(2, 2));
   }
 
   /**

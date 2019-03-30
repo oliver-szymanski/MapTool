@@ -42,7 +42,9 @@ import net.rptools.common.expression.ExpressionParser;
 import net.rptools.maptool.client.MapTool;
 import net.rptools.maptool.client.MapToolMacroContext;
 import net.rptools.maptool.client.MapToolVariableResolver;
+import net.rptools.maptool.client.functions.frameworkfunctions.ui.BaseComponentListener;
 import net.rptools.maptool.client.functions.frameworkfunctions.ui.ButtonFrame;
+import net.rptools.maptool.client.functions.frameworkfunctions.ui.TranslucentFrame;
 import net.rptools.maptool.client.macro.MacroContext;
 import net.rptools.maptool.client.macro.MacroDefinition;
 import net.rptools.maptool.client.macro.MacroManager;
@@ -61,8 +63,10 @@ public class FrameworksFunctions implements Function {
   private static final String INIT_FRAMEWORKS = "initFrameworks";
   private static final String RESET_FRAMEWORKS = "resetFrameworks";
   private static final String UNPACK_ARGS_FUNCTION_NAME = "unpackArgs";
+  private static final String TOGGLE_CHAT = "toggleChat";
   private final String[] FUNCTION_NAMES = {
-    IMPORT_FUNCTIONS_BUNDLE, INIT_FRAMEWORKS, RESET_FRAMEWORKS, UNPACK_ARGS_FUNCTION_NAME
+    IMPORT_FUNCTIONS_BUNDLE, INIT_FRAMEWORKS, RESET_FRAMEWORKS, UNPACK_ARGS_FUNCTION_NAME,
+    TOGGLE_CHAT
   };
 
   private static final AccessControlContext accessControlContextForExtensionFunctions;
@@ -71,6 +75,7 @@ public class FrameworksFunctions implements Function {
   private final int minParameters;
   private final int maxParameters;
   private final boolean deterministic;
+  private boolean windowComponentListening = false;
 
   private List<FrameworkClassLoader> frameworksClassLoader = new LinkedList<>();
   private Map<FrameworkClassLoader, String> frameworksClassLoaderToLibs = new HashMap<>();;
@@ -145,19 +150,12 @@ public class FrameworksFunctions implements Function {
     }
     buttonFrames.clear();
 
-    // add the default functions without any prefix
-    //frameworkFunctions.add(this);
-    //for (String function : getFrameworksFunctionNames()) {
-    //  frameworkFunctionsAliasMap.put(function, this);
-    //  frameworkAliasPrefixMap.put(function, function);
-    //}
-
     SecurityManager current = System.getSecurityManager();
     if (current == null) {
       // make sure at least some default policy/security manager is setup
       // one is required to have access control on extensions code
       // by default Java does not have one
-//      Policy.setPolicy(new AllPolicy(this.getClass().getProtectionDomain()));
+      // Policy.setPolicy(new AllPolicy(this.getClass().getProtectionDomain()));
       Policy.setPolicy(new AllPolicy(MapTool.class.getProtectionDomain()));
       System.setSecurityManager(new SecurityManagerPackageAccess());
     }
@@ -224,11 +222,18 @@ public class FrameworksFunctions implements Function {
     frameworksClassLoaderToLibs.put(frameworkClassLoader, frameworkLibURL.getFile());
   }
 
-
   public static FrameworksFunctions getInstance() {
     return instance;
   }
-
+  
+  private synchronized void registerMapToolFrameListener() {
+    if (MapTool.getFrame() != null && 
+        !windowComponentListening) {
+      MapTool.getFrame().addComponentListener(BaseComponentListener.instance);
+      windowComponentListening = true;
+    }
+  }
+  
   public Object childEvaluate(Parser parser, String functionName, List<Object> parameters)
       throws ParserException {
 
@@ -244,11 +249,14 @@ public class FrameworksFunctions implements Function {
     }
 
     if (IMPORT_FUNCTIONS_BUNDLE.equals(functionName)) {
+      registerMapToolFrameListener();
       return importFunctionsBundle(parser, IMPORT_FUNCTIONS_BUNDLE, parameters);
     } else if (RESET_FRAMEWORKS.equals(functionName)) {
+      registerMapToolFrameListener();
       init();
       return BigDecimal.ONE;
     } else if (INIT_FRAMEWORKS.equals(functionName)) {
+      registerMapToolFrameListener();
       if (parameters.size() == 0) {
         // auto add from extension-frameworks sub directory
         initFrameworksFromExtensionDirectory();
@@ -258,6 +266,10 @@ public class FrameworksFunctions implements Function {
           initFramework(parameter.toString());
         }
       }
+      return BigDecimal.ONE;
+    } else if (TOGGLE_CHAT.equals(functionName)) {
+//      TranslucentFrame chatFrame = new TranslucentFrame("Chat", "", "Chat", true);
+  //    chatFrame.show();
       return BigDecimal.ONE;
     } else {
       return executeFunction(parser, functionName, parameters);
@@ -637,4 +649,5 @@ public class FrameworksFunctions implements Function {
   public static interface Run<T> {
     T run() throws Exception;
   }
+
 }

@@ -2,6 +2,8 @@ package net.rptools.maptool.client.functions.frameworkfunctions.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -27,7 +29,7 @@ import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import net.rptools.maptool.client.MapTool;
 import net.rptools.maptool.client.functions.frameworkfunctions.ExtensionFunctionButton;
 
-class TranslucentFrame {
+public class TranslucentFrame {
   private TranslucentFrame rootFrame;
   private JFrame actualFrame;
   private JTabbedPane tabbedPane;
@@ -45,6 +47,14 @@ class TranslucentFrame {
     this.prefixedFrameId = prefixedFrameId;
     initRootFrame();
   }
+  
+  public TranslucentFrame(String frameName, String prefixedFrameName, String prefixedFrameId, Component... components ) {
+    this.frameName = frameName;
+    this.prefixedFrameName = prefixedFrameName;
+    this.prefixedFrameId = prefixedFrameId;
+    initRootFrame();
+    initWithComponents(components);
+  }
 
   public TranslucentFrame(String frameName, String prefixedFrameName, String prefixedFrameId, String group, TranslucentFrame root) {
     this.frameName = frameName;
@@ -55,7 +65,21 @@ class TranslucentFrame {
     root.subFrames.add(this);
     initSubTab();
   }
+  
+  private void initWithComponents(Component ... components) {
+    JPanel container = new JPanel(new BorderLayout());
 
+    for (Component component : components) {
+      container.add(component);
+      component.setVisible(true);
+      component.invalidate();
+    }    
+    
+    Container content = tabbedPane.getParent();
+    content.remove(tabbedPane);
+    content.add(container);
+  }
+  
   private void initRootFrame() {
     actualFrame = new JFrame(frameName);
     actualFrame.setLayout(new BorderLayout());
@@ -132,10 +156,6 @@ class TranslucentFrame {
     this.subTab = new JPanel(new WrapLayout());
     JScrollPane scrollPane = new JScrollPane(this.subTab);
     rootFrame.tabbedPane.addTab(this.group, scrollPane);
-    //JComponent panel = makeTextPanel(this.group);
-    //tabbedPane.addTab(this.group, icon, panel,
-    //                  null);
-    //tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
   }
   
   protected JComponent makeTextPanel(String text) {
@@ -184,7 +204,7 @@ class TranslucentFrame {
   }
   
   public void close() {
-    actualFrame.setVisible(false);
+    hide();
     actualFrame.dispose();
   }
   
