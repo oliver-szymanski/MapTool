@@ -9,6 +9,8 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Insets;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.URL;
@@ -32,12 +34,15 @@ import net.rptools.maptool.client.functions.frameworkfunctions.ExtensionFunction
 public class TranslucentFrame {
   private TranslucentFrame rootFrame;
   private JFrame actualFrame;
+  private JPanel contentContainer;
   private JTabbedPane tabbedPane;
   private JPanel subTab;
   private String frameName;
   private String group;
   private List<TranslucentFrame> subFrames = new LinkedList<>();
   private String prefixedFrameName;
+  private boolean minimized= false;
+  
   @SuppressWarnings("unused")
   private String prefixedFrameId;
   
@@ -75,9 +80,8 @@ public class TranslucentFrame {
       component.invalidate();
     }    
     
-    Container content = tabbedPane.getParent();
-    content.remove(tabbedPane);
-    content.add(container);
+    contentContainer.remove(tabbedPane);
+    contentContainer.add(container);
   }
   
   private void initRootFrame() {
@@ -86,16 +90,7 @@ public class TranslucentFrame {
    // actualFrame.setLayout(new GridLayout(30,30,30,30));
     actualFrame.setSize(300,200);
 
-    Integer x      = PreferenceManager.loadPreference(actualFrame.getLocation().x, "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "x");
-    Integer y      = PreferenceManager.loadPreference(actualFrame.getLocation().y, "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "y");
-    Integer width  = PreferenceManager.loadPreference(actualFrame.getWidth(), "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "width");
-    Integer height = PreferenceManager.loadPreference(actualFrame.getHeight(), "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "height");
-    if (x != null && y != null && width != null && height != null) {
-      actualFrame.setLocation(x, y);
-      actualFrame.setSize(width, height);
-    } else {
-      actualFrame.setLocationRelativeTo(null);
-    }
+    loadPreferences();
     
     actualFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     actualFrame.setUndecorated(true);
@@ -105,6 +100,25 @@ public class TranslucentFrame {
     actualFrame.setResizable(true);
     JLabel label = new JLabel(prefixedFrameName);
     label.setFont(label.getFont().deriveFont(14f));
+    label.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent event) {  
+          if (event.getClickCount() == 2 && !event.isConsumed()) {
+            event.consume();
+            // save preferences before minimizing
+            if (contentContainer.isVisible()) {
+              savePreferences();
+            }
+            contentContainer.setVisible(!contentContainer.isVisible());
+            minimized = !contentContainer.isVisible();
+            if (contentContainer.isVisible()) {
+              loadPreferences();
+            } else {
+              actualFrame.pack();
+            }
+            actualFrame.invalidate();
+          }
+        }
+      });
     //label.setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
     JPanel title = new JPanel();
     title.add(label);
@@ -124,7 +138,7 @@ public class TranslucentFrame {
       }
     });
     
-    JPanel tabbedPaneContainer = new JPanel(){
+    contentContainer = new JPanel(){
       private static final long serialVersionUID = 1L;
 
       @Override
@@ -132,9 +146,9 @@ public class TranslucentFrame {
         return new Insets(10, 10, 10, 10);
       }
     };
-    tabbedPaneContainer.setLayout(new GridLayout());
-    tabbedPaneContainer.add(tabbedPane);
-    actualFrame.add(tabbedPaneContainer);
+    contentContainer.setLayout(new GridLayout());
+    contentContainer.add(tabbedPane);
+    actualFrame.add(contentContainer);
     actualFrame.addWindowListener(new WindowAdapter() {
       public void windowClosing(WindowEvent we) {
         savePreferences();
@@ -146,10 +160,25 @@ public class TranslucentFrame {
     actualFrame.addMouseMotionListener(frameDragListener);
     
     ComponentResizer cr = new ComponentResizer();
-    cr.setSnapSize(new Dimension(10, 10));
+    cr.setSnapSize(new Dimension(1, 1));
     cr.registerComponent(actualFrame);
     cr.setFrameDragListener(frameDragListener);
     cr.setResizeThis(actualFrame);
+
+  }
+
+  private void loadPreferences() {
+    Integer x      = PreferenceManager.loadPreference(actualFrame.getLocation().x, "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "x");
+    Integer y      = PreferenceManager.loadPreference(actualFrame.getLocation().y, "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "y");
+    Integer width  = PreferenceManager.loadPreference(actualFrame.getWidth(), "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "width");
+    Integer height = PreferenceManager.loadPreference(actualFrame.getHeight(), "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "height");
+    minimized = PreferenceManager.loadPreference(this.minimized, "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "minimized");
+    if (x != null && y != null && width != null && height != null) {
+      actualFrame.setLocation(x, y);
+      actualFrame.setSize(width, height);
+    } else {
+      actualFrame.setLocationRelativeTo(null);
+    }
   }
   
   private void initSubTab() {
@@ -194,8 +223,11 @@ public class TranslucentFrame {
   private void savePreferences() {
     PreferenceManager.savePreference(actualFrame.getLocation().x, "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "x");
     PreferenceManager.savePreference(actualFrame.getLocation().y, "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "y");
-    PreferenceManager.savePreference(actualFrame.getWidth(), "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "width");
-    PreferenceManager.savePreference(actualFrame.getHeight(), "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "height");
+    if (!minimized) {
+      PreferenceManager.savePreference(actualFrame.getWidth(), "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "width");
+      PreferenceManager.savePreference(actualFrame.getHeight(), "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "height");
+    }
+    PreferenceManager.savePreference(minimized, "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "minimized");
   }
 
   public void hide() {
