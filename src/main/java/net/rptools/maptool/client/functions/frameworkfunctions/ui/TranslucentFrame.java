@@ -9,6 +9,7 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Insets;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -36,6 +37,7 @@ public class TranslucentFrame {
   private JFrame actualFrame;
   private JPanel contentContainer;
   private JTabbedPane tabbedPane;
+  private JPanel title;
   private JPanel subTab;
   private String frameName;
   private String group;
@@ -53,12 +55,12 @@ public class TranslucentFrame {
     initRootFrame();
   }
   
-  public TranslucentFrame(String frameName, String prefixedFrameName, String prefixedFrameId, Component... components ) {
+  public TranslucentFrame(String frameName, String prefixedFrameName, String prefixedFrameId, Component componentForLabel, Component... components ) {
     this.frameName = frameName;
     this.prefixedFrameName = prefixedFrameName;
     this.prefixedFrameId = prefixedFrameId;
     initRootFrame();
-    initWithComponents(components);
+    initWithComponents(componentForLabel, components);
   }
 
   public TranslucentFrame(String frameName, String prefixedFrameName, String prefixedFrameId, String group, TranslucentFrame root) {
@@ -71,7 +73,7 @@ public class TranslucentFrame {
     initSubTab();
   }
   
-  private void initWithComponents(Component ... components) {
+  private void initWithComponents(Component componentForLabel, Component ... components) {
     JPanel container = new JPanel(new BorderLayout());
 
     for (Component component : components) {
@@ -79,6 +81,9 @@ public class TranslucentFrame {
       component.setVisible(true);
       component.invalidate();
     }    
+    if (componentForLabel != null) {
+      title.add(componentForLabel);
+    }
     
     contentContainer.remove(tabbedPane);
     contentContainer.add(container);
@@ -90,7 +95,7 @@ public class TranslucentFrame {
    // actualFrame.setLayout(new GridLayout(30,30,30,30));
     actualFrame.setSize(300,200);
 
-    loadPreferences();
+    loadPreferences(false);
     
     actualFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     actualFrame.setUndecorated(true);
@@ -103,24 +108,13 @@ public class TranslucentFrame {
     label.addMouseListener(new MouseAdapter() {
         public void mouseClicked(MouseEvent event) {  
           if (event.getClickCount() == 2 && !event.isConsumed()) {
-            event.consume();
-            // save preferences before minimizing
-            if (contentContainer.isVisible()) {
-              savePreferences();
-            }
-            contentContainer.setVisible(!contentContainer.isVisible());
-            minimized = !contentContainer.isVisible();
-            if (contentContainer.isVisible()) {
-              loadPreferences();
-            } else {
-              actualFrame.pack();
-            }
-            actualFrame.invalidate();
+            event.consume(); 
+            setMinimized(!isMinimized());
           }
         }
       });
     //label.setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
-    JPanel title = new JPanel();
+    title = new JPanel();
     title.add(label);
     actualFrame.add(title, BorderLayout.NORTH);
     
@@ -149,6 +143,10 @@ public class TranslucentFrame {
     contentContainer.setLayout(new GridLayout());
     contentContainer.add(tabbedPane);
     actualFrame.add(contentContainer);
+    if (minimized) { 
+      contentContainer.setVisible(false);
+      actualFrame.pack();
+    }
     actualFrame.addWindowListener(new WindowAdapter() {
       public void windowClosing(WindowEvent we) {
         savePreferences();
@@ -158,23 +156,26 @@ public class TranslucentFrame {
     FrameDragListener frameDragListener = new FrameDragListener(actualFrame);
     actualFrame.addMouseListener(frameDragListener);
     actualFrame.addMouseMotionListener(frameDragListener);
+    label.addMouseListener(frameDragListener);
+    label.addMouseMotionListener(frameDragListener);
     
     ComponentResizer cr = new ComponentResizer();
     cr.setSnapSize(new Dimension(1, 1));
     cr.registerComponent(actualFrame);
     cr.setFrameDragListener(frameDragListener);
     cr.setResizeThis(actualFrame);
-
   }
 
-  private void loadPreferences() {
+  private void loadPreferences(boolean loadSizeOnly) {
     Integer x      = PreferenceManager.loadPreference(actualFrame.getLocation().x, "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "x");
     Integer y      = PreferenceManager.loadPreference(actualFrame.getLocation().y, "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "y");
     Integer width  = PreferenceManager.loadPreference(actualFrame.getWidth(), "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "width");
     Integer height = PreferenceManager.loadPreference(actualFrame.getHeight(), "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "height");
-    minimized = PreferenceManager.loadPreference(this.minimized, "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "minimized");
+    boolean minimized = PreferenceManager.loadPreference(this.minimized, "FrameworkFunctions", "ButtonFrame", prefixedFrameId, group, "minimized");
+    
+    if (!loadSizeOnly) { this.minimized = minimized; }
     if (x != null && y != null && width != null && height != null) {
-      actualFrame.setLocation(x, y);
+      if (!loadSizeOnly) { actualFrame.setLocation(x, y); }
       actualFrame.setSize(width, height);
     } else {
       actualFrame.setLocationRelativeTo(null);
@@ -194,6 +195,14 @@ public class TranslucentFrame {
     panel.setLayout(new GridLayout(1, 1));
     panel.add(filler);
     return panel;
+  }
+  
+  public void addComponentListener(ComponentListener listener) {
+    contentContainer.addComponentListener(listener);
+  }
+  
+  public void removeComponentListener(ComponentListener listener) {
+    contentContainer.removeComponentListener(listener);
   }
   
   private JButton createButton(ExtensionFunctionButton functionButton) {
@@ -310,5 +319,31 @@ public class TranslucentFrame {
     }
     
     return this.actualFrame.isVisible();
+  }
+  
+
+  public boolean isMinimized() {
+    return minimized;
+  }
+
+  public void setMinimized(boolean minimized) {
+    this.minimized = minimized;
+    
+    // save preferences before minimizing
+    if (contentContainer.isVisible() && minimized) {
+      savePreferences();
+    }
+
+    // load preferences if restoring
+    if (!minimized) {
+      loadPreferences(true);
+      contentContainer.setVisible(true);
+    } else {
+      this.minimized = true;
+      contentContainer.setVisible(false);
+      actualFrame.pack();
+    }
+
+    actualFrame.invalidate();
   }
 }
