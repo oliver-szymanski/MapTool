@@ -437,7 +437,8 @@ public class FrameworksFunctions implements Function {
     ExtensionFunction function = frameworkFunctionsAliasMap.get(functionName);
 
     if (function != null) {
-      return function.execute(parser, aliasWithoutPrefix, parameters);
+      return executeExtensionFunctionWithAccessControl(parser, parameters, aliasWithoutPrefix, function);
+//      return function.evaluate(parser, aliasWithoutPrefix, parameters);
     }
 
     return BigDecimal.ZERO;

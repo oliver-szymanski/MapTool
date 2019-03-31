@@ -121,12 +121,27 @@ public class FunctionCaller {
       String functionName, Function f, Parser parser, Object... parameters)
       throws ParserException {
     try {
-      return AccessController.doPrivileged(
+      // check if function is from core
+      boolean priviledgeCode= AccessController.doPrivileged(
+          new PrivilegedExceptionAction<>() {
+            public Boolean run() throws Exception {
+              return f.getClass().getProtectionDomain().getCodeSource().implies(MapTool.class.getProtectionDomain().getCodeSource());
+            }
+          });
+
+      // run with priviledges if function is from core
+      if (priviledgeCode) {
+        return AccessController.doPrivileged(
           new PrivilegedExceptionAction<>() {
             public Object run() throws Exception {
+              // if function if from core run priviledged
               return f.evaluate(parser, functionName, Arrays.asList(parameters));
             }
           });
+      } else {
+        // run with current priviledges
+        return f.evaluate(parser, functionName, Arrays.asList(parameters));
+      }
     } catch (PrivilegedActionException e) {
       throw new ParserException(e);
     }
@@ -139,6 +154,10 @@ public class FunctionCaller {
       return AccessController.doPrivileged(
           new PrivilegedExceptionAction<>() {
             public Object run() throws Exception {
+              // if this is a function straight from the parser
+              // call it with priviledges.
+              // if its an extension behind it, that will be checked in FrameworkFunctions
+              // and access will be reduced.
               return f.evaluate(parser, functionName, Arrays.asList(parameters));
             }
           });
@@ -150,16 +169,16 @@ public class FunctionCaller {
   public static Object callFunction(
       String functionName, ExtensionFunction f, Parser parser, Object... parameters)
       throws ParserException {
-    try {
-      return AccessController.doPrivileged(
-          new PrivilegedExceptionAction<>() {
-            public Object run() throws Exception {
-              return f.execute(parser, functionName, Arrays.asList(parameters));
-            }
-          });
-    } catch (PrivilegedActionException e) {
-      throw new ParserException(e);
-    }
+    //try {
+      //return AccessController.doPrivileged(
+        //  new PrivilegedExceptionAction<>() {
+          //  public Object run() throws Exception {
+              return f.evaluate(parser, functionName, Arrays.asList(parameters));
+          //  }
+         // });
+    //} catch (PrivilegedActionException e) {
+      //throw new ParserException(e);
+    //}
   }
 
   public static List<Object> toObjectList(Object... parameters) {

@@ -55,7 +55,7 @@ public abstract class ExtensionFunction {
     return String.format("between %d and %d parameters", new Object[] { Integer.valueOf(alias.getMinParameters()), Integer.valueOf(alias.getMaxParameters()) });
   }
   
-  public final Object execute(Parser parser, String functionName, List<Object> parameters) throws ParserException{
+  public final Object evaluate(Parser parser, String functionName, List<Object> parameters) throws ParserException {
     
     boolean notFound = true;
     for(Alias alias : extensionFunctionAliases) {
@@ -69,8 +69,9 @@ public abstract class ExtensionFunction {
     if (trustedRequired && !MapTool.getParser().isMacroTrusted()) {
       throw new ParserException(I18N.getText("macro.function.general.noPerm", functionName));
     }
-    
-    return FrameworksFunctions.executeExtensionFunctionWithAccessControl(parser, parameters, functionName, this);
+  
+    return run(parser, functionName, parameters);
+//    return FrameworksFunctions.executeExtensionFunctionWithAccessControl(parser, parameters, functionName, this);
   }
 
   protected String getPrefix() {
