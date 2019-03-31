@@ -358,7 +358,7 @@ public class PersistenceUtil {
         }
 
         // save in new splitted file format
-        // if not exporting to an old version that used the content.xml file
+        // if not use exporting to an old version that used the content.xml file
         if (campaignVersion == null || !pakFile.hasFile(PackedFile.CONTENT_FILE)) {
           pakFile.putFile("assetMap.xml", persistedCampaign.assetMap);
           pakFile.putFile("currentView.xml", persistedCampaign.currentView);
@@ -895,9 +895,7 @@ public class PersistenceUtil {
               for (String potentialTokenFile : pakFile.getPaths()) {
                 String fileNameToken = getFileName(potentialTokenFile);
                 String filePathToken = getPath(potentialTokenFile);
-                if (potentialTokenFile.contains("tok")) {
-                  System.out.println(potentialFile);
-                }
+
                 if (filePathToken.startsWith(joinFilePaths(zoneDirectory, TOKENS_DIRECTORY))
                     && fileNameToken.startsWith(TOKEN_FILE_PREFIX)
                     && fileNameToken.endsWith(TOKEN_FILE_SUFFIX)) {
@@ -977,8 +975,6 @@ public class PersistenceUtil {
           persistedCampaign.campaign = campaign;
           persistedCampaign.mapToolVersion = campaignWrapper.mapToolVersion;
           persistedCampaign.currentZoneId = campaignWrapper.currentZoneId;
-          //          persistedCampaign = (PersistedCampaign) pakFile.getContent(campaignVersion,
-          // PackedFile.CONTENT_FILE);
         }
       } catch (ConversionException ce) {
         // Ignore the exception and check for "campaign == null" below...
@@ -992,14 +988,6 @@ public class PersistenceUtil {
         for (Zone zone : persistedCampaign.campaign.getZones()) {
           zone.optimize();
         }
-
-        // for (Entry<String, Map<GUID, LightSource>> entry :
-        // persistedCampaign.campaign.getLightSourcesMap().entrySet()) {
-        // for (Entry<GUID, LightSource> entryLs : entry.getValue().entrySet()) {
-        // System.out.println(entryLs.getValue().getName() + " :: " + entryLs.getValue().getType() +
-        // " :: " + entryLs.getValue().getLumens());
-        // }
-        // }
 
         return persistedCampaign;
       }
@@ -1399,8 +1387,6 @@ public class PersistenceUtil {
 
       String extension = asset.getImageExtension();
       byte[] assetData = asset.getImage();
-      // System.out.println("Saving AssetId " + assetId + "." + extension + " with size of " +
-      // assetData.length);
 
       pakFile.putFile(ASSET_DIR + assetId + "." + extension, assetData);
       pakFile.putFile(ASSET_DIR + assetId + "", asset); // Does not write the image
