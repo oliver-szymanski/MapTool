@@ -418,8 +418,7 @@ public class PersistenceUtil {
           for (Zone zone : persistedCampaign.campaign.getZones()) {
             String zonePath =
                 joinFilePaths(
-                    ZONES_DIRECTORY,
-                    fixFileName(zone.getName()) + "_" + zone.getId().toString());
+                    ZONES_DIRECTORY, fixFileName(zone.getName()) + "_" + zone.getId().toString());
 
             // save tokens in zone
             List<String> tokenFiles = new LinkedList<String>();
@@ -601,7 +600,7 @@ public class PersistenceUtil {
     while (m.find()) {
       // Convert matched character.
       // which is everything that is not allowed
-      String replacement = "_"; 
+      String replacement = "_";
       // this would map it to percent encoding, not really needed for us
       // "%" + Integer.toHexString(m.group().charAt(0)).toUpperCase();
       m.appendReplacement(sb, replacement);

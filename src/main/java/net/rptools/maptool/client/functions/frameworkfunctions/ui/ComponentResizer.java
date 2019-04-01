@@ -1,3 +1,17 @@
+/*
+ * This software Copyright by the RPTools.net development team, and
+ * licensed under the Affero GPL Version 3 or, at your option, any later
+ * version.
+ *
+ * MapTool Source Code is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * You should have received a copy of the GNU Affero General Public
+ * License * along with this source Code.  If not, please visit
+ * <http://www.gnu.org/licenses/> and specifically the Affero license
+ * text at <http://www.gnu.org/licenses/agpl.html>.
+ */
 package net.rptools.maptool.client.functions.frameworkfunctions.ui;
 
 import java.awt.Component;
@@ -12,21 +26,16 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
-/**
- *  The ComponentResizer allows you to resize a component by dragging a border
- *  of the component.
- */
-public class ComponentResizer extends MouseAdapter
-{
-  private final static Dimension MINIMUM_SIZE = new Dimension(10, 10);
-  private final static Dimension MAXIMUM_SIZE =
-    new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
+/** The ComponentResizer allows you to resize a component by dragging a border of the component. */
+public class ComponentResizer extends MouseAdapter {
+  private static final Dimension MINIMUM_SIZE = new Dimension(10, 10);
+  private static final Dimension MAXIMUM_SIZE = new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
 
   private static Map<Integer, Integer> cursors = new HashMap<Integer, Integer>();
+
   {
     cursors.put(1, Cursor.N_RESIZE_CURSOR);
     cursors.put(2, Cursor.W_RESIZE_CURSOR);
@@ -54,7 +63,7 @@ public class ComponentResizer extends MouseAdapter
   private boolean autoscrolls;
   private FrameDragListener frameDragListener;
   private Component resizeThis;
-  
+
   public Component getResizeThis() {
     return resizeThis;
   }
@@ -67,253 +76,214 @@ public class ComponentResizer extends MouseAdapter
   private Dimension maximumSize = MAXIMUM_SIZE;
 
   /**
-   *  Convenience contructor. All borders are resizable in increments of
-   *  a single pixel. Components must be registered separately.
+   * Convenience contructor. All borders are resizable in increments of a single pixel. Components
+   * must be registered separately.
    */
-  public ComponentResizer()
-  {
+  public ComponentResizer() {
     this(new Insets(5, 5, 5, 5), new Dimension(1, 1));
   }
 
   /**
-   *  Convenience contructor. All borders are resizable in increments of
-   *  a single pixel. Components can be registered when the class is created
-   *  or they can be registered separately afterwards.
+   * Convenience contructor. All borders are resizable in increments of a single pixel. Components
+   * can be registered when the class is created or they can be registered separately afterwards.
    *
-   *  @param components components to be automatically registered
+   * @param components components to be automatically registered
    */
-  public ComponentResizer(Component... components)
-  {
+  public ComponentResizer(Component... components) {
     this(new Insets(5, 5, 5, 5), new Dimension(1, 1), components);
   }
 
   /**
-   *  Convenience contructor. Eligible borders are resisable in increments of
-   *  a single pixel. Components can be registered when the class is created
-   *  or they can be registered separately afterwards.
+   * Convenience contructor. Eligible borders are resisable in increments of a single pixel.
+   * Components can be registered when the class is created or they can be registered separately
+   * afterwards.
    *
-   *  @param dragInsets Insets specifying which borders are eligible to be
-   *                    resized.
-   *  @param components components to be automatically registered
+   * @param dragInsets Insets specifying which borders are eligible to be resized.
+   * @param components components to be automatically registered
    */
-  public ComponentResizer(Insets dragInsets, Component... components)
-  {
+  public ComponentResizer(Insets dragInsets, Component... components) {
     this(dragInsets, new Dimension(1, 1), components);
   }
 
   /**
-   *  Create a ComponentResizer.
+   * Create a ComponentResizer.
    *
-   *  @param dragInsets Insets specifying which borders are eligible to be
-   *                    resized.
-   *  @param snapSize Specify the dimension to which the border will snap to
-   *                  when being dragged. Snapping occurs at the halfway mark.
-   *  @param components components to be automatically registered
+   * @param dragInsets Insets specifying which borders are eligible to be resized.
+   * @param snapSize Specify the dimension to which the border will snap to when being dragged.
+   *     Snapping occurs at the halfway mark.
+   * @param components components to be automatically registered
    */
-  public ComponentResizer(Insets dragInsets, Dimension snapSize, Component... components)
-  {
-    setDragInsets( dragInsets );
-    setSnapSize( snapSize );
-    registerComponent( components );
+  public ComponentResizer(Insets dragInsets, Dimension snapSize, Component... components) {
+    setDragInsets(dragInsets);
+    setSnapSize(snapSize);
+    registerComponent(components);
   }
 
   /**
-   *  Get the drag insets
+   * Get the drag insets
    *
-   *  @return  the drag insets
+   * @return the drag insets
    */
-  public Insets getDragInsets()
-  {
+  public Insets getDragInsets() {
     return dragInsets;
   }
 
   /**
-   *  Set the drag dragInsets. The insets specify an area where mouseDragged
-   *  events are recognized from the edge of the border inwards. A value of
-   *  0 for any size will imply that the border is not resizable. Otherwise
-   *  the appropriate drag cursor will appear when the mouse is inside the
-   *  resizable border area.
+   * Set the drag dragInsets. The insets specify an area where mouseDragged events are recognized
+   * from the edge of the border inwards. A value of 0 for any size will imply that the border is
+   * not resizable. Otherwise the appropriate drag cursor will appear when the mouse is inside the
+   * resizable border area.
    *
-   *  @param  dragInsets Insets to control which borders are resizeable.
+   * @param dragInsets Insets to control which borders are resizeable.
    */
-  public void setDragInsets(Insets dragInsets)
-  {
+  public void setDragInsets(Insets dragInsets) {
     validateMinimumAndInsets(minimumSize, dragInsets);
 
     this.dragInsets = dragInsets;
   }
 
   /**
-   *  Get the components maximum size.
+   * Get the components maximum size.
    *
-   *  @return the maximum size
+   * @return the maximum size
    */
-  public Dimension getMaximumSize()
-  {
+  public Dimension getMaximumSize() {
     return maximumSize;
   }
 
   /**
-   *  Specify the maximum size for the component. The component will still
-   *  be constrained by the size of its parent.
+   * Specify the maximum size for the component. The component will still be constrained by the size
+   * of its parent.
    *
-   *  @param maximumSize the maximum size for a component.
+   * @param maximumSize the maximum size for a component.
    */
-  public void setMaximumSize(Dimension maximumSize)
-  {
+  public void setMaximumSize(Dimension maximumSize) {
     this.maximumSize = maximumSize;
   }
 
   /**
-   *  Get the components minimum size.
+   * Get the components minimum size.
    *
-   *  @return the minimum size
+   * @return the minimum size
    */
-  public Dimension getMinimumSize()
-  {
+  public Dimension getMinimumSize() {
     return minimumSize;
   }
 
   /**
-   *  Specify the minimum size for the component. The minimum size is
-   *  constrained by the drag insets.
+   * Specify the minimum size for the component. The minimum size is constrained by the drag insets.
    *
-   *  @param minimumSize the minimum size for a component.
+   * @param minimumSize the minimum size for a component.
    */
-  public void setMinimumSize(Dimension minimumSize)
-  {
+  public void setMinimumSize(Dimension minimumSize) {
     validateMinimumAndInsets(minimumSize, dragInsets);
 
     this.minimumSize = minimumSize;
   }
 
   /**
-   *  Remove listeners from the specified component
+   * Remove listeners from the specified component
    *
-   *  @param component  the component the listeners are removed from
+   * @param component the component the listeners are removed from
    */
-  public void deregisterComponent(Component... components)
-  {
-    for (Component component : components)
-    {
-      component.removeMouseListener( this );
-      component.removeMouseMotionListener( this );
+  public void deregisterComponent(Component... components) {
+    for (Component component : components) {
+      component.removeMouseListener(this);
+      component.removeMouseMotionListener(this);
     }
   }
 
   /**
-   *  Add the required listeners to the specified component
+   * Add the required listeners to the specified component
    *
-   *  @param component  the component the listeners are added to
+   * @param component the component the listeners are added to
    */
-  public void registerComponent(Component... components)
-  {
-    for (Component component : components)
-    {
-      component.addMouseListener( this );
-      component.addMouseMotionListener( this );
+  public void registerComponent(Component... components) {
+    for (Component component : components) {
+      component.addMouseListener(this);
+      component.addMouseMotionListener(this);
     }
   }
 
   /**
-   *  Get the snap size.
+   * Get the snap size.
    *
-   *  @return the snap size.
+   * @return the snap size.
    */
-  public Dimension getSnapSize()
-  {
+  public Dimension getSnapSize() {
     return snapSize;
   }
 
   /**
-   *  Control how many pixels a border must be dragged before the size of
-   *  the component is changed. The border will snap to the size once
-   *  dragging has passed the halfway mark.
+   * Control how many pixels a border must be dragged before the size of the component is changed.
+   * The border will snap to the size once dragging has passed the halfway mark.
    *
-   *  @param snapSize Dimension object allows you to separately spcify a
-   *                  horizontal and vertical snap size.
+   * @param snapSize Dimension object allows you to separately spcify a horizontal and vertical snap
+   *     size.
    */
-  public void setSnapSize(Dimension snapSize)
-  {
+  public void setSnapSize(Dimension snapSize) {
     this.snapSize = snapSize;
   }
 
   /**
-   *  When the components minimum size is less than the drag insets then
-   *  we can't determine which border should be resized so we need to
-   *  prevent this from happening.
+   * When the components minimum size is less than the drag insets then we can't determine which
+   * border should be resized so we need to prevent this from happening.
    */
-  private void validateMinimumAndInsets(Dimension minimum, Insets drag)
-  {
+  private void validateMinimumAndInsets(Dimension minimum, Insets drag) {
     int minimumWidth = drag.left + drag.right;
     int minimumHeight = drag.top + drag.bottom;
 
-    if (minimum.width  < minimumWidth
-    ||  minimum.height < minimumHeight)
-    {
+    if (minimum.width < minimumWidth || minimum.height < minimumHeight) {
       String message = "Minimum size cannot be less than drag insets";
-      throw new IllegalArgumentException( message );
+      throw new IllegalArgumentException(message);
     }
   }
 
-  /**
-   */
+  /** */
   @Override
-  public void mouseMoved(MouseEvent e)
-  {
+  public void mouseMoved(MouseEvent e) {
     Component source = e.getComponent();
     Point location = e.getPoint();
     direction = 0;
 
-    if (location.x < dragInsets.left)
-      direction += WEST;
+    if (location.x < dragInsets.left) direction += WEST;
 
-    if (location.x > source.getWidth() - dragInsets.right - 1)
-      direction += EAST;
+    if (location.x > source.getWidth() - dragInsets.right - 1) direction += EAST;
 
-    if (location.y < dragInsets.top)
-      direction += NORTH;
+    if (location.y < dragInsets.top) direction += NORTH;
 
-    if (location.y > source.getHeight() - dragInsets.bottom - 1)
-      direction += SOUTH;
+    if (location.y > source.getHeight() - dragInsets.bottom - 1) direction += SOUTH;
 
     //  Mouse is no longer over a resizable border
 
-    if (direction == 0)
+    if (direction == 0) {
+      source.setCursor(sourceCursor);
+    } else // use the appropriate resizable cursor
     {
-      source.setCursor( sourceCursor );
-    }
-    else  // use the appropriate resizable cursor
-    {
-      int cursorType = cursors.get( direction );
-      Cursor cursor = Cursor.getPredefinedCursor( cursorType );
-      source.setCursor( cursor );
+      int cursorType = cursors.get(direction);
+      Cursor cursor = Cursor.getPredefinedCursor(cursorType);
+      source.setCursor(cursor);
     }
   }
 
   @Override
-  public void mouseEntered(MouseEvent e)
-  {
-    if (! resizing)
-    {
+  public void mouseEntered(MouseEvent e) {
+    if (!resizing) {
       Component source = e.getComponent();
       sourceCursor = source.getCursor();
     }
   }
 
   @Override
-  public void mouseExited(MouseEvent e)
-  {
-    if (! resizing)
-    {
+  public void mouseExited(MouseEvent e) {
+    if (!resizing) {
       Component source = e.getComponent();
-      source.setCursor( sourceCursor );
+      source.setCursor(sourceCursor);
     }
   }
 
   @Override
-  public void mousePressed(MouseEvent e)
-  {
+  public void mousePressed(MouseEvent e) {
     //  The mouseMoved event continually updates this variable
 
     if (direction == 0) return;
@@ -327,12 +297,12 @@ public class ComponentResizer extends MouseAdapter
     }
 
     Component source = e.getComponent();
-    
+
     pressed = e.getPoint();
     SwingUtilities.convertPointToScreen(pressed, source);
-    
-    if(resizeThis != null) { 
-      bounds = resizeThis.getBounds(); 
+
+    if (resizeThis != null) {
+      bounds = resizeThis.getBounds();
     } else {
       bounds = source.getBounds();
     }
@@ -340,20 +310,16 @@ public class ComponentResizer extends MouseAdapter
     //  Making sure autoscrolls is false will allow for smoother resizing
     //  of components
 
-    if (source instanceof JComponent)
-    {
-      JComponent jc = (JComponent)source;
+    if (source instanceof JComponent) {
+      JComponent jc = (JComponent) source;
       autoscrolls = jc.getAutoscrolls();
-      jc.setAutoscrolls( false );
+      jc.setAutoscrolls(false);
     }
   }
 
-  /**
-   *  Restore the original state of the Component
-   */
+  /** Restore the original state of the Component */
   @Override
-  public void mouseReleased(MouseEvent e)
-  {
+  public void mouseReleased(MouseEvent e) {
     resizing = false;
     if (frameDragListener != null) {
       frameDragListener.setEnabled(true);
@@ -361,52 +327,51 @@ public class ComponentResizer extends MouseAdapter
 
     Component source = e.getComponent();
 
-    source.setCursor( sourceCursor );
+    source.setCursor(sourceCursor);
 
-    if (source instanceof JComponent)
-    {
-      ((JComponent)source).setAutoscrolls( autoscrolls );
+    if (source instanceof JComponent) {
+      ((JComponent) source).setAutoscrolls(autoscrolls);
     }
-    
-    //if (resizeThis != null && resizeThis instanceof JFrame) ((JFrame)resizeThis).pack();
-    if (resizeThis != null) { resizeThis.invalidate(); }
+
+    // if (resizeThis != null && resizeThis instanceof JFrame) ((JFrame)resizeThis).pack();
+    if (resizeThis != null) {
+      resizeThis.invalidate();
+    }
   }
 
   /**
-   *  Resize the component ensuring location and size is within the bounds
-   *  of the parent container and that the size is within the minimum and
-   *  maximum constraints.
+   * Resize the component ensuring location and size is within the bounds of the parent container
+   * and that the size is within the minimum and maximum constraints.
    *
-   *  All calculations are done using the bounds of the component when the
-   *  resizing started.
+   * <p>All calculations are done using the bounds of the component when the resizing started.
    */
   @Override
-  public void mouseDragged(MouseEvent e)
-  {
+  public void mouseDragged(MouseEvent e) {
     if (resizing == false) return;
 
     Component source = e.getComponent();
-    //if(resizeThis != null) { source = resizeThis; }
+    // if(resizeThis != null) { source = resizeThis; }
     Point dragged = e.getPoint();
     SwingUtilities.convertPointToScreen(dragged, source);
 
     changeBounds(source, direction, bounds, pressed, dragged);
   }
 
-  protected void changeBounds(Component source, int direction, Rectangle bounds, Point pressed, Point current)
-  {
+  protected void changeBounds(
+      Component source, int direction, Rectangle bounds, Point pressed, Point current) {
     //  Start with original locaton and size
 
     int x = bounds.x;
     int y = bounds.y;
     int width = bounds.width;
     int height = bounds.height;
-    if (resizeThis != null) { source = resizeThis; }
+    if (resizeThis != null) {
+      source = resizeThis;
+    }
 
     //  Resizing the West or North border affects the size and location
 
-    if (WEST == (direction & WEST))
-    {
+    if (WEST == (direction & WEST)) {
       int drag = getDragDistance(pressed.x, current.x, snapSize.width);
       int maximum = Math.min(width + x, maximumSize.width);
       drag = getDragBounded(drag, snapSize.width, width, minimumSize.width, maximum);
@@ -415,8 +380,7 @@ public class ComponentResizer extends MouseAdapter
       width += drag;
     }
 
-    if (NORTH == (direction & NORTH))
-    {
+    if (NORTH == (direction & NORTH)) {
       int drag = getDragDistance(pressed.y, current.y, snapSize.height);
       int maximum = Math.min(height + y, maximumSize.height);
       drag = getDragBounded(drag, snapSize.height, height, minimumSize.height, maximum);
@@ -427,19 +391,17 @@ public class ComponentResizer extends MouseAdapter
 
     //  Resizing the East or South border only affects the size
 
-    if (EAST == (direction & EAST))
-    {
+    if (EAST == (direction & EAST)) {
       int drag = getDragDistance(current.x, pressed.x, snapSize.width);
-      Dimension boundingSize = getBoundingSize( source );
+      Dimension boundingSize = getBoundingSize(source);
       int maximum = Math.min(boundingSize.width - x, maximumSize.width);
       drag = getDragBounded(drag, snapSize.width, width, minimumSize.width, maximum);
       width += drag;
     }
 
-    if (SOUTH == (direction & SOUTH))
-    {
+    if (SOUTH == (direction & SOUTH)) {
       int drag = getDragDistance(current.y, pressed.y, snapSize.height);
-      Dimension boundingSize = getBoundingSize( source );
+      Dimension boundingSize = getBoundingSize(source);
       int maximum = Math.min(boundingSize.height - y, maximumSize.height);
       drag = getDragBounded(drag, snapSize.height, height, minimumSize.height, maximum);
       height += drag;
@@ -452,8 +414,7 @@ public class ComponentResizer extends MouseAdapter
   /*
    *  Determine how far the mouse has moved from where dragging started
    */
-  private int getDragDistance(int larger, int smaller, int snapSize)
-  {
+  private int getDragDistance(int larger, int smaller, int snapSize) {
     int halfway = snapSize / 2;
     int drag = larger - smaller;
     drag += (drag < 0) ? -halfway : halfway;
@@ -465,14 +426,10 @@ public class ComponentResizer extends MouseAdapter
   /*
    *  Adjust the drag value to be within the minimum and maximum range.
    */
-  private int getDragBounded(int drag, int snapSize, int dimension, int minimum, int maximum)
-  {
-    while (dimension + drag < minimum)
-      drag += snapSize;
+  private int getDragBounded(int drag, int snapSize, int dimension, int minimum, int maximum) {
+    while (dimension + drag < minimum) drag += snapSize;
 
-    while (dimension + drag > maximum)
-      drag -= snapSize;
-
+    while (dimension + drag > maximum) drag -= snapSize;
 
     return drag;
   }
@@ -480,16 +437,12 @@ public class ComponentResizer extends MouseAdapter
   /*
    *  Keep the size of the component within the bounds of its parent.
    */
-  private Dimension getBoundingSize(Component source)
-  {
-    if (source instanceof Window)
-    {
+  private Dimension getBoundingSize(Component source) {
+    if (source instanceof Window) {
       GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
       Rectangle bounds = env.getMaximumWindowBounds();
       return new Dimension(bounds.width, bounds.height);
-    }
-    else
-    {
+    } else {
       return source.getParent().getSize();
     }
   }

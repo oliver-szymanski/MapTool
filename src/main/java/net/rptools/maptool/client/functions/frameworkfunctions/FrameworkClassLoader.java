@@ -1,3 +1,17 @@
+/*
+ * This software Copyright by the RPTools.net development team, and
+ * licensed under the Affero GPL Version 3 or, at your option, any later
+ * version.
+ *
+ * MapTool Source Code is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * You should have received a copy of the GNU Affero General Public
+ * License * along with this source Code.  If not, please visit
+ * <http://www.gnu.org/licenses/> and specifically the Affero license
+ * text at <http://www.gnu.org/licenses/agpl.html>.
+ */
 package net.rptools.maptool.client.functions.frameworkfunctions;
 
 import java.net.URL;
@@ -29,7 +43,7 @@ class FrameworkClassLoader extends URLClassLoader {
         copyPermissions(super.getPermissions(origin), perms);
         origins.add(origin);
       }
-      // perms.setReadOnly();
+      //perms.setReadOnly();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -40,7 +54,7 @@ class FrameworkClassLoader extends URLClassLoader {
       dst.add(e.nextElement());
     }
   }
-  
+
   @Override
   public void addURL(URL url) {
     super.addURL(url);
@@ -56,7 +70,7 @@ class FrameworkClassLoader extends URLClassLoader {
         return perms;
       }
     }
-
+    //return perms;
     return super.getPermissions(cs);
   }
 }

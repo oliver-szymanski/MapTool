@@ -1,3 +1,17 @@
+/*
+ * This software Copyright by the RPTools.net development team, and
+ * licensed under the Affero GPL Version 3 or, at your option, any later
+ * version.
+ *
+ * MapTool Source Code is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * You should have received a copy of the GNU Affero General Public
+ * License * along with this source Code.  If not, please visit
+ * <http://www.gnu.org/licenses/> and specifically the Affero license
+ * text at <http://www.gnu.org/licenses/agpl.html>.
+ */
 package net.rptools.maptool.client.functions.frameworkfunctions;
 
 import net.rptools.maptool.client.MapTool;
@@ -15,9 +29,16 @@ public abstract class ExtensionFunctionButton {
   private String imageFile;
   private boolean nameAndImage;
   private final boolean trustedRequired;
-  private  String prefix = null;
+  private String prefix = null;
 
-  public ExtensionFunctionButton(String name, String tooltip, String group, String frame, String imageFile, boolean nameAndImage, boolean trustedRequired) {
+  public ExtensionFunctionButton(
+      String name,
+      String tooltip,
+      String group,
+      String frame,
+      String imageFile,
+      boolean nameAndImage,
+      boolean trustedRequired) {
     this.trustedRequired = trustedRequired;
     this.name = name;
     this.tooltip = tooltip;
@@ -38,16 +59,15 @@ public abstract class ExtensionFunctionButton {
   public abstract void run(Parser parser) throws ParserException;
 
   public final void execute() {
-    MapToolMacroContext executionContext = new MapToolMacroContext(
-              MapToolLineParser.CHAT_INPUT,
-              MapToolLineParser.CHAT_INPUT,
-              MapTool.getPlayer().isGM());
+    MapToolMacroContext executionContext =
+        new MapToolMacroContext(
+            MapToolLineParser.CHAT_INPUT, MapToolLineParser.CHAT_INPUT, MapTool.getPlayer().isGM());
     if (trustedRequired && !executionContext.isTrusted()) {
       return;
     }
 
     MapTool.getParser().enterContext(executionContext);
-    
+
     try {
       FrameworksFunctions.executeExtensionFunctionButtonWithAccessControl(this);
     } catch (Exception e) {
@@ -60,21 +80,21 @@ public abstract class ExtensionFunctionButton {
   public String getName() {
     return name;
   }
-  
+
   public String getPrefixedFrame() {
-    if(this.prefix != null && prefix.length() > 0) {
-      return prefix.substring(0, prefix.length()-1) + ": " + frame;
+    if (this.prefix != null && prefix.length() > 0) {
+      return prefix.substring(0, prefix.length() - 1) + ": " + frame;
     }
     return frame;
   }
 
   public String getPrefixedFrameId() {
-    if(this.prefix != null) {
+    if (this.prefix != null) {
       return prefix + frame;
     }
     return frame;
   }
-  
+
   public void setName(String name) {
     this.name = name;
   }
@@ -106,7 +126,7 @@ public abstract class ExtensionFunctionButton {
   public final boolean isTrustedRequired() {
     return trustedRequired;
   }
-  
+
   protected String getPrefix() {
     return prefix;
   }

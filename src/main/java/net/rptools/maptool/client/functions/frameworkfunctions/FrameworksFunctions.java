@@ -15,7 +15,6 @@
 package net.rptools.maptool.client.functions.frameworkfunctions;
 
 import com.twelvemonkeys.lang.StringUtil;
-
 import java.io.File;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
@@ -27,7 +26,6 @@ import java.security.CodeSource;
 import java.security.PermissionCollection;
 import java.security.Permissions;
 import java.security.Policy;
-import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.ProtectionDomain;
 import java.util.Collection;
@@ -35,16 +33,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.PropertyPermission;
 import java.util.stream.Collectors;
-
 import net.rptools.common.expression.ExpressionParser;
 import net.rptools.maptool.client.MapTool;
 import net.rptools.maptool.client.MapToolMacroContext;
 import net.rptools.maptool.client.MapToolVariableResolver;
 import net.rptools.maptool.client.functions.frameworkfunctions.ui.BaseComponentListener;
 import net.rptools.maptool.client.functions.frameworkfunctions.ui.ButtonFrame;
-import net.rptools.maptool.client.functions.frameworkfunctions.ui.TranslucentFrame;
 import net.rptools.maptool.client.macro.MacroContext;
 import net.rptools.maptool.client.macro.MacroDefinition;
 import net.rptools.maptool.client.macro.MacroManager;
@@ -65,7 +60,10 @@ public class FrameworksFunctions implements Function {
   private static final String UNPACK_ARGS_FUNCTION_NAME = "unpackArgs";
   private static final String TOGGLE_CHAT = "toggleChat";
   private final String[] FUNCTION_NAMES = {
-    IMPORT_FUNCTIONS_BUNDLE, INIT_FRAMEWORKS, RESET_FRAMEWORKS, UNPACK_ARGS_FUNCTION_NAME,
+    IMPORT_FUNCTIONS_BUNDLE,
+    INIT_FRAMEWORKS,
+    RESET_FRAMEWORKS,
+    UNPACK_ARGS_FUNCTION_NAME,
     TOGGLE_CHAT
   };
 
@@ -84,31 +82,31 @@ public class FrameworksFunctions implements Function {
   private final List<ExtensionChatMacro> frameworkChatMacros = new LinkedList<>();
   private final Map<String, ExtensionFunction> frameworkFunctionsAliasMap = new HashMap<>();
   private final Map<String, String> frameworkAliasPrefixMap = new HashMap<>();
-  private Map<String, ButtonFrame> buttonFrames= new HashMap<>();;
+  private Map<String, ButtonFrame> buttonFrames = new HashMap<>();;
   private String[] aliases;
 
   static {
     // initialization of the allowed permissions
     PermissionCollection allowedPermissions = new Permissions();
-    allowedPermissions.add(new PropertyPermission("*", "read"));
-
+    //allowedPermissions.add(new PropertyPermission("*", "read"));
     // allowedPermissions.add(new RuntimePermission("accessDeclaredMembers"));
     // ... <many more permissions here> ...
     accessControlContextForExtensionFunctions =
         new AccessControlContext(
             new ProtectionDomain[] {new ProtectionDomain(null, allowedPermissions)});
-    
+
     PermissionCollection allPermissions = new Permissions();
     allPermissions.add(new AllPermission());
-    
-    // allowedPermissions.add(new RuntimePermission("accessDeclaredMembers"));
-    // ... <many more permissions here> ...
     accessControlContextAllAllowed =
         new AccessControlContext(
-            new ProtectionDomain[] {new ProtectionDomain(null, allPermissions)});
+            new ProtectionDomain[] {
+              new ProtectionDomain(
+                  MapTool.class.getProtectionDomain().getCodeSource(), allPermissions),
+              new ProtectionDomain(
+                  FrameworksFunctions.class.getProtectionDomain().getCodeSource(), allPermissions)
+            });
   }
 
-  
   private FrameworksFunctions() {
     this.minParameters = 2;
     this.maxParameters = 2;
@@ -141,11 +139,11 @@ public class FrameworksFunctions implements Function {
     frameworkFunctionsAliasMap.clear();
     frameworkAliasPrefixMap.clear();
 
-    for(@SuppressWarnings("unused") ExtensionChatMacro chatMacro : frameworkChatMacros) {
+    for (@SuppressWarnings("unused") ExtensionChatMacro chatMacro : frameworkChatMacros) {
       // currently MT does not support to remove a macro
     }
 
-    for(ButtonFrame buttonFrame : buttonFrames.values()) {
+    for (ButtonFrame buttonFrame : buttonFrames.values()) {
       buttonFrame.clear();
     }
     buttonFrames.clear();
@@ -155,8 +153,8 @@ public class FrameworksFunctions implements Function {
       // make sure at least some default policy/security manager is setup
       // one is required to have access control on extensions code
       // by default Java does not have one
-      // Policy.setPolicy(new AllPolicy(this.getClass().getProtectionDomain()));
-      Policy.setPolicy(new AllPolicy(MapTool.class.getProtectionDomain()));
+
+      Policy.setPolicy(new AllPermissionsPolicy());
       System.setSecurityManager(new SecurityManagerPackageAccess());
     }
 
@@ -212,11 +210,12 @@ public class FrameworksFunctions implements Function {
       return;
     }
     MapTool.addLocalMessage("init extension framework: " + frameworkLibURL.toString());
-    
-    FrameworkClassLoader frameworkClassLoader = new FrameworkClassLoader(new URL[] {}, this.getClass().getClassLoader());
+
+    FrameworkClassLoader frameworkClassLoader =
+        new FrameworkClassLoader(new URL[] {}, this.getClass().getClassLoader());
     frameworkClassLoader.addURL(frameworkLibURL);
-    
-    // add classloader to front of the list so that a later added one 
+
+    // add classloader to front of the list so that a later added one
     // can override function/macro definitions
     frameworksClassLoader.add(0, frameworkClassLoader);
     frameworksClassLoaderToLibs.put(frameworkClassLoader, frameworkLibURL.getFile());
@@ -225,15 +224,14 @@ public class FrameworksFunctions implements Function {
   public static FrameworksFunctions getInstance() {
     return instance;
   }
-  
+
   private synchronized void registerMapToolFrameListener() {
-    if (MapTool.getFrame() != null && 
-        !windowComponentListening) {
+    if (MapTool.getFrame() != null && !windowComponentListening) {
       MapTool.getFrame().addComponentListener(BaseComponentListener.instance);
       windowComponentListening = true;
     }
   }
-  
+
   public Object childEvaluate(Parser parser, String functionName, List<Object> parameters)
       throws ParserException {
 
@@ -268,15 +266,16 @@ public class FrameworksFunctions implements Function {
       }
       return BigDecimal.ONE;
     } else if (TOGGLE_CHAT.equals(functionName)) {
-//      TranslucentFrame chatFrame = new TranslucentFrame("Chat", "", "Chat", true);
-  //    chatFrame.show();
+      //      TranslucentFrame chatFrame = new TranslucentFrame("Chat", "", "Chat", true);
+      //    chatFrame.show();
       return BigDecimal.ONE;
     } else {
       return executeFunction(parser, functionName, parameters);
     }
   }
 
-  private synchronized Object importFunctionsBundle(Parser parser, String functionName, List<Object> parameters)
+  private synchronized Object importFunctionsBundle(
+      Parser parser, String functionName, List<Object> parameters)
       throws ParameterException, ParserException {
     this.checkParameters(parameters);
 
@@ -298,51 +297,62 @@ public class FrameworksFunctions implements Function {
     }
 
     try {
-      
+
       ExtensionFrameworkBundle framework = null;
-      
+
       // check all extension lib classloader in order
-      for(FrameworkClassLoader frameworkClassLoader : frameworksClassLoader) {
+      for (FrameworkClassLoader frameworkClassLoader : frameworksClassLoader) {
         try {
           framework =
               (ExtensionFrameworkBundle)
                   Class.forName(frameworkFunctionBundle.toString(), true, frameworkClassLoader)
                       .getDeclaredConstructor()
                       .newInstance();
-          MapTool.addLocalMessage("imported bundle: '" + frameworkFunctionBundle.toString() + "' from '"
-              +frameworksClassLoaderToLibs.get(frameworkClassLoader) + "'");
+          
+          MapTool.addLocalMessage(
+              "imported bundle: '"
+                  + frameworkFunctionBundle.toString()
+                  + "' from '"
+                  + frameworksClassLoaderToLibs.get(frameworkClassLoader)
+                  + "'");
         } catch (Exception e) {
           // safe to ignore
-        }        
+        }
       }
-      
+
       // try current classloader if nothing yet found
       if (framework == null) {
         try {
           framework =
               (ExtensionFrameworkBundle)
-                  Class.forName(frameworkFunctionBundle.toString(), true, this.getClass().getClassLoader())
+                  Class.forName(
+                          frameworkFunctionBundle.toString(),
+                          true,
+                          this.getClass().getClassLoader())
                       .getDeclaredConstructor()
                       .newInstance();
-          MapTool.addLocalMessage("imported bundle: '" + frameworkFunctionBundle.toString() + "' from base libraries.");
+          MapTool.addLocalMessage(
+              "imported bundle: '" + frameworkFunctionBundle.toString() + "' from base libraries.");
         } catch (Exception e) {
           // safe to ignore
-        }  
+        }
       }
-       
+
       // check if bundle was found
       if (framework == null) {
-        MapTool.addLocalMessage("bundle not found in any lib: " + frameworkFunctionBundle.toString());
+        MapTool.addLocalMessage(
+            "bundle not found in any lib: " + frameworkFunctionBundle.toString());
         return BigDecimal.ZERO;
       }
-      
+
       Collection<? extends ExtensionFunction> functions = framework.getFunctions();
-      Collection<? extends ExtensionFunctionButton> functionButtons = framework.getFunctionButtons();
+      Collection<? extends ExtensionFunctionButton> functionButtons =
+          framework.getFunctionButtons();
       Collection<? extends ExtensionChatMacro> chatMacros = framework.getChatMacros();
 
       // are we running in trusted context
       boolean trusted = MapTool.getParser().isMacroPathTrusted();
-      
+
       // init extension functions
       for (ExtensionFunction function : functions) {
         if (frameworkFunctions.contains(function)) {
@@ -372,7 +382,7 @@ public class FrameworksFunctions implements Function {
         newChatMacros.add(macroDefinition.name());
         frameworkChatMacros.add(chatMacro);
       }
-      
+
       // init extension function buttons
       for (ExtensionFunctionButton functionButton : functionButtons) {
         if (functionButton.isTrustedRequired() && !trusted) {
@@ -382,26 +392,31 @@ public class FrameworksFunctions implements Function {
         functionButton.setPrefix(prefix);
         String frame = functionButton.getFrame();
         if (prefix != null && prefix.length() > 0) {
-          frame = prefix+frame;
+          frame = prefix + frame;
         }
         ButtonFrame buttonFrame = buttonFrames.get(frame);
         if (buttonFrame == null) {
-          buttonFrame = new ButtonFrame(functionButton.getFrame(), functionButton.getPrefixedFrame(), functionButton.getPrefixedFrameId());
+          buttonFrame =
+              new ButtonFrame(
+                  functionButton.getFrame(),
+                  functionButton.getPrefixedFrame(),
+                  functionButton.getPrefixedFrameId());
           newButtonFrames.add(frame);
           buttonFrames.put(frame, buttonFrame);
         }
-        
+
         buttonFrame.add(functionButton);
       }
-      
-      if (Boolean.FALSE.equals(FunctionCaller.getVariable(parser, "framework.functions.frame.autoshow", false))) {
+
+      if (Boolean.FALSE.equals(
+          FunctionCaller.getVariable(parser, "framework.functions.frame.autoshow", false))) {
         for (ButtonFrame buttonFrame : buttonFrames.values()) {
           buttonFrame.show();
         }
       }
 
     } catch (Exception e) {
-      //MapTool.addLocalMessage(
+      // MapTool.addLocalMessage(
       //    "could not load bundle (maybe it's libary was not imported): "
       //        + frameworkFunctionBundle.toString() + "(" + e.toString() + ")");
       e.printStackTrace();
@@ -417,9 +432,10 @@ public class FrameworksFunctions implements Function {
     String[] frameworkAliases = getFrameworksFunctionNames();
     String[] allAliases = new String[extensionAliases.length + frameworkAliases.length];
     System.arraycopy(extensionAliases, 0, allAliases, 0, extensionAliases.length);
-    System.arraycopy(frameworkAliases, 0, allAliases, extensionAliases.length, frameworkAliases.length);
+    System.arraycopy(
+        frameworkAliases, 0, allAliases, extensionAliases.length, frameworkAliases.length);
     this.aliases = allAliases;
-    
+
     MapToolScriptSyntax.resetScriptSyntax();
     MapTool.addLocalMessage(
         "bundle " + frameworkFunctionBundle + " defined chat macros: " + macros);
@@ -437,8 +453,8 @@ public class FrameworksFunctions implements Function {
     ExtensionFunction function = frameworkFunctionsAliasMap.get(functionName);
 
     if (function != null) {
-      return executeExtensionFunctionWithAccessControl(parser, parameters, aliasWithoutPrefix, function);
-//      return function.evaluate(parser, aliasWithoutPrefix, parameters);
+      return executeExtensionFunctionWithAccessControl(
+          parser, parameters, aliasWithoutPrefix, function);
     }
 
     return BigDecimal.ZERO;
@@ -448,13 +464,14 @@ public class FrameworksFunctions implements Function {
     if (!buttonFrames.containsKey(frame)) {
       return false;
     }
-    
+
     try {
-      return executePrivileged(new Run<Boolean>() {
-        public Boolean run() {
-          return buttonFrames.get(frame).isVisible();
-        }
-      });
+      return executePrivileged(
+          new Run<Boolean>() {
+            public Boolean run() {
+              return buttonFrames.get(frame).isVisible();
+            }
+          });
     } catch (Exception e) {
       return false;
     }
@@ -476,29 +493,31 @@ public class FrameworksFunctions implements Function {
     if (!buttonFrames.containsKey(frame)) {
       return false;
     }
-    
+
     try {
-      return executePrivileged(new Run<Boolean>() {
-        public Boolean run() {
-          return buttonFrames.get(frame).show();
-        }
-      });
+      return executePrivileged(
+          new Run<Boolean>() {
+            public Boolean run() {
+              return buttonFrames.get(frame).show();
+            }
+          });
     } catch (Exception e) {
       return false;
     }
   }
-  
+
   public boolean hideFrame(String frame) {
     if (!buttonFrames.containsKey(frame)) {
       return false;
     }
-    
+
     try {
-      return executePrivileged(new Run<Boolean>() {
-        public Boolean run() {
-          return buttonFrames.get(frame).hide();
-        }
-      });
+      return executePrivileged(
+          new Run<Boolean>() {
+            public Boolean run() {
+              return buttonFrames.get(frame).hide();
+            }
+          });
     } catch (Exception e) {
       return false;
     }
@@ -506,43 +525,58 @@ public class FrameworksFunctions implements Function {
 
   static <T> T executePrivileged(Run<T> runnable) throws Exception {
     // run the runnable in a controlled environment without restrictions
-    T result = AccessController.doPrivileged((PrivilegedExceptionAction<T>) () -> {
-        return runnable.run();
-      });
+    T result =
+        AccessController.doPrivileged(
+            (PrivilegedExceptionAction<T>)
+                () -> {
+                  return runnable.run();
+                });
     return result;
   }
-  
-  static <T> T executeNotPrivileged(Run<T> runnable) {
+
+  static <T> T executeNotPrivileged(Run<T> runnable, boolean restrictFurther) throws ParserException {
     T result = null;
     try {
       // run runnable in a controlled environment with restrictions
-      // permissions are given via the accessControlContext
+      // permissions are given via the accessControlContext.
       // package access is controlled by permissions and the exceptions in
       // SecurityManagerPackageAccess
       // (Functions loaded as extension but inside the main libs are
-      // having normal access control)
-      result = 
+      // having normal access control).
+      
+      // classes calling this are already restrict by ACC during classloading
+      // and by security manager. only call doPriviledged with another
+      // ACC if you want to further reduce the access even for whatever
+      // is called now in the callstack.
+      
+      if (!restrictFurther) {
+        result = runnable.run();
+      } else {
           AccessController.doPrivileged(
               new PrivilegedExceptionAction<>() {
                 public T run() throws Exception {
-                  return runnable.run();
+                  return 
+          runnable.run();
                 }
               },
               accessControlContextForExtensionFunctions);
-    } catch (PrivilegedActionException e) {
-      throw new RuntimeException(e);
+      }
+    } catch (Exception e) {
+      throw new ParserException(e);
     }
     return result;
   }
-  
+
   static Object executeExtensionFunctionWithAccessControl(
-      Parser parser, List<Object> parameters, String alias, ExtensionFunction function) throws ParserException {
-    Object result = executeNotPrivileged(
-          new Run<Object>() {
-                public Object run() throws ParserException {
-                  return function.run(parser, alias, parameters);
-                }
-              });
+      Parser parser, List<Object> parameters, String alias, ExtensionFunction function)
+      throws ParserException {
+    Object result =
+        executeNotPrivileged(
+            new Run<Object>() {
+              public Object run() throws ParserException {
+                return function.run(parser, alias, parameters);
+              }
+            }, false);
     return result;
   }
 
@@ -551,27 +585,31 @@ public class FrameworksFunctions implements Function {
       MacroContext context,
       String macroName,
       MapToolMacroContext executionContext) {
-    executeNotPrivileged(
-      new Run<Object>() {
+    try {
+      executeNotPrivileged(
+          new Run<Object>() {
             public Object run() throws ParserException {
               chatMacro.run(context, macroName, executionContext);
               return null;
             }
-          });
+          }, false);
+    } catch (ParserException e) {
+      e.printStackTrace();
+    }
   }
-  
+
   static void executeExtensionFunctionButtonWithAccessControl(
-      ExtensionFunctionButton functionButton) {
+      ExtensionFunctionButton functionButton) throws ParserException {
     executeNotPrivileged(
-          new Run<Object>() {
-            public Object run() throws ParserException {
-              MapToolVariableResolver resolver = new MapToolVariableResolver(null);
-              ExpressionParser parser = new ExpressionParser(resolver);
-              parser.getParser().addFunctions(MapTool.getParser().getMacroFunctions());
-              functionButton.run(parser.getParser());
-              return null;
-            }
-          });
+        new Run<Object>() {
+          public Object run() throws ParserException {
+            MapToolVariableResolver resolver = new MapToolVariableResolver(null);
+            ExpressionParser parser = new ExpressionParser(resolver);
+            parser.getParser().addFunctions(MapTool.getParser().getMacroFunctions());
+            functionButton.run(parser.getParser());
+            return null;
+          }
+        }, false);
   }
 
   public String[] getAliases() {
@@ -579,7 +617,7 @@ public class FrameworksFunctions implements Function {
       aliases = getFrameworksFunctionNames();
       return new String[0];
     }
-    
+
     return aliases;
   }
 
@@ -621,20 +659,15 @@ public class FrameworksFunctions implements Function {
     return String.format("between %d and %d parameters", this.minParameters, this.maxParameters);
   }
 
-  private static class AllPolicy extends Policy {
+  private static class AllPermissionsPolicy extends Policy {
 
     private static volatile PermissionCollection perms;
 
-    // in case more checks based on domain/codeSource are needed
-    @SuppressWarnings("unused")
-    private ProtectionDomain domain;
-
-    public AllPolicy(ProtectionDomain domain) {
+    public AllPermissionsPolicy() {
       super();
 
-      this.domain = domain;
       if (perms == null) {
-        synchronized (AllPolicy.class) {
+        synchronized (AllPermissionsPolicy.class) {
           perms = new Permissions();
           perms.add(new AllPermission());
         }
@@ -646,9 +679,8 @@ public class FrameworksFunctions implements Function {
       return perms;
     }
   }
-  
+
   public static interface Run<T> {
     T run() throws Exception;
   }
-
 }

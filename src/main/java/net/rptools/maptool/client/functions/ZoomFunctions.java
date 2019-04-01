@@ -133,9 +133,14 @@ public class ZoomFunctions extends AbstractFunction {
       }
     } else {
       ZoneRenderer zoneRenderer = MapTool.getFrame().getCurrentZoneRenderer();
-      CellPoint z1 = zoneRenderer.getZone().getGrid().convert(convertToZone(zoneRenderer, offsetX, offsetY));
-      CellPoint z2 = zoneRenderer.getZone().getGrid().convert(convertToZone(zoneRenderer, offsetX+width, offsetY+height));
-      
+      CellPoint z1 =
+          zoneRenderer.getZone().getGrid().convert(convertToZone(zoneRenderer, offsetX, offsetY));
+      CellPoint z2 =
+          zoneRenderer
+              .getZone()
+              .getGrid()
+              .convert(convertToZone(zoneRenderer, offsetX + width, offsetY + height));
+
       if ("json".equalsIgnoreCase(delim)) {
         return createBoundsAsJSON(z1.x, z1.y, z2.x, z2.y);
       } else {
@@ -143,7 +148,7 @@ public class ZoomFunctions extends AbstractFunction {
       }
     }
   }
-  
+
   public static ZonePoint convertToZone(ZoneRenderer renderer, double x, double y) {
     double scale = renderer.getScale();
     double zX = (int) Math.floor(x / scale);
