@@ -358,7 +358,7 @@ public class PersistenceUtil {
         }
 
         // save in new splitted file format
-        // if not use exporting to an old version that used the content.xml file
+        // if not exporting to an old version that used the content.xml file
         if (campaignVersion == null || !pakFile.hasFile(PackedFile.CONTENT_FILE)) {
 
           if (!saveUnpackedAsDirectory) {
@@ -528,34 +528,33 @@ public class PersistenceUtil {
         for (Map.Entry<Integer, Object> macroEntry :
             token.getMacroPropertiesMap(false).entrySet()) {
           MacroButtonProperties macro = (MacroButtonProperties) macroEntry.getValue();
-          String macroFile =
+          String macroFileRelative =
               joinFilePaths(
-                  zonePath,
-                  tokenPath,
                   MACROS_DIRECTORY,
                   MACRO_FILE_PREFIX
                       + fixFileName(macro.getLabel())
                       + "_"
                       + macro.getMacroUUID().toUpperCase()
                       + MACRO_FILE_SUFFIX);
-          String macroContentFile =
+          String macroFileAbsolute = joinFilePaths(zonePath, tokenPath, macroFileRelative);
+          String macroContentFileRelative =
               joinFilePaths(
-                  zonePath,
-                  tokenPath,
                   MACROS_DIRECTORY,
                   MACRO_FILE_PREFIX
                       + fixFileName(macro.getLabel())
                       + "_"
                       + macro.getMacroUUID().toUpperCase()
                       + MTSCRIPT_FILE_SUFFIX);
+          String macroContentFileAbsolute =
+              joinFilePaths(zonePath, tokenPath, macroContentFileRelative);
           MacroFileWrapper tokenMacroFileWrapper = new MacroFileWrapper();
           tokenMacroFileWrapper.index = macro.getIndex();
           tokenMacroFileWrapper.saveLocation = macro.getSaveLocation();
-          tokenMacroFileWrapper.macroFile = macroFile;
+          tokenMacroFileWrapper.macroFile = macroFileRelative;
           tokenMacroFiles.add(tokenMacroFileWrapper);
-          pakFile.putFile(macroFile, macro);
+          pakFile.putFile(macroFileAbsolute, macro);
           if (macro.getCommand() != null) {
-            pakFile.putFileAsString(macroContentFile, macro.getCommand().toString());
+            pakFile.putFileAsString(macroContentFileAbsolute, macro.getCommand().toString());
           }
         }
 
@@ -904,7 +903,6 @@ public class PersistenceUtil {
               for (String potentialTokenFile : pakFile.getPaths()) {
                 String fileNameToken = getFileName(potentialTokenFile);
                 String filePathToken = getPath(potentialTokenFile);
-
                 if (filePathToken.startsWith(joinFilePaths(zoneDirectory, TOKENS_DIRECTORY))
                     && fileNameToken.startsWith(TOKEN_FILE_PREFIX)
                     && fileNameToken.endsWith(TOKEN_FILE_SUFFIX)) {
@@ -925,6 +923,8 @@ public class PersistenceUtil {
                   for (MacroFileWrapper tokenMacroFileWrapper : tokenMacroFiles) {
                     String macroFile = removeLeadingSlash(tokenMacroFileWrapper.macroFile);
                     String macroContentFile = changeFileEndingTo(macroFile, MTSCRIPT_FILE_SUFFIX);
+                    macroFile = joinFilePaths(tokenDirectory, macroFile);
+                    macroContentFile = joinFilePaths(tokenDirectory, macroContentFile);
                     // make sure file was not removed
                     if (pakFile.hasFile(macroFile)) {
                       MacroButtonProperties macroButtonProperties =
@@ -946,8 +946,11 @@ public class PersistenceUtil {
                   // check dynamically for macro files that are under token directory but
                   // not defined in token
                   for (String potentialTokenMacroFile : pakFile.getPaths()) {
-                    String fileNameTokenMacro = getFileName(potentialFile);
-                    String filePathTokenMacro = getPath(potentialFile);
+                    if (potentialTokenMacroFile.contains("Wolf")) {
+                      System.out.println("here");
+                    }
+                    String fileNameTokenMacro = getFileName(potentialTokenMacroFile);
+                    String filePathTokenMacro = getPath(potentialTokenMacroFile);
                     if (filePathTokenMacro.startsWith(
                             joinFilePaths(tokenDirectory, MACROS_DIRECTORY))
                         && fileNameTokenMacro.startsWith(MACRO_FILE_PREFIX)
@@ -984,6 +987,8 @@ public class PersistenceUtil {
           persistedCampaign.campaign = campaign;
           persistedCampaign.mapToolVersion = campaignWrapper.mapToolVersion;
           persistedCampaign.currentZoneId = campaignWrapper.currentZoneId;
+          //          persistedCampaign = (PersistedCampaign) pakFile.getContent(campaignVersion,
+          // PackedFile.CONTENT_FILE);
         }
       } catch (ConversionException ce) {
         // Ignore the exception and check for "campaign == null" below...
@@ -997,6 +1002,14 @@ public class PersistenceUtil {
         for (Zone zone : persistedCampaign.campaign.getZones()) {
           zone.optimize();
         }
+
+        // for (Entry<String, Map<GUID, LightSource>> entry :
+        // persistedCampaign.campaign.getLightSourcesMap().entrySet()) {
+        // for (Entry<GUID, LightSource> entryLs : entry.getValue().entrySet()) {
+        // System.out.println(entryLs.getValue().getName() + " :: " + entryLs.getValue().getType() +
+        // " :: " + entryLs.getValue().getLumens());
+        // }
+        // }
 
         return persistedCampaign;
       }
@@ -1396,6 +1409,8 @@ public class PersistenceUtil {
 
       String extension = asset.getImageExtension();
       byte[] assetData = asset.getImage();
+      // System.out.println("Saving AssetId " + assetId + "." + extension + " with size of " +
+      // assetData.length);
 
       pakFile.putFile(ASSET_DIR + assetId + "." + extension, assetData);
       pakFile.putFile(ASSET_DIR + assetId + "", asset); // Does not write the image
