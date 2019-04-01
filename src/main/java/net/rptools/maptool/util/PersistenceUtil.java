@@ -528,34 +528,33 @@ public class PersistenceUtil {
         for (Map.Entry<Integer, Object> macroEntry :
             token.getMacroPropertiesMap(false).entrySet()) {
           MacroButtonProperties macro = (MacroButtonProperties) macroEntry.getValue();
-          String macroFile =
+          String macroFileRelative =
               joinFilePaths(
-                  zonePath,
-                  tokenPath,
                   MACROS_DIRECTORY,
                   MACRO_FILE_PREFIX
                       + fixFileName(macro.getLabel())
                       + "_"
                       + macro.getMacroUUID().toUpperCase()
                       + MACRO_FILE_SUFFIX);
-          String macroContentFile =
+          String macroFileAbsolute = joinFilePaths(zonePath, tokenPath, macroFileRelative);
+          String macroContentFileRelative =
               joinFilePaths(
-                  zonePath,
-                  tokenPath,
                   MACROS_DIRECTORY,
                   MACRO_FILE_PREFIX
                       + fixFileName(macro.getLabel())
                       + "_"
                       + macro.getMacroUUID().toUpperCase()
                       + MTSCRIPT_FILE_SUFFIX);
+          String macroContentFileAbsolute =
+              joinFilePaths(zonePath, tokenPath, macroContentFileRelative);
           MacroFileWrapper tokenMacroFileWrapper = new MacroFileWrapper();
           tokenMacroFileWrapper.index = macro.getIndex();
           tokenMacroFileWrapper.saveLocation = macro.getSaveLocation();
-          tokenMacroFileWrapper.macroFile = macroFile;
+          tokenMacroFileWrapper.macroFile = macroFileRelative;
           tokenMacroFiles.add(tokenMacroFileWrapper);
-          pakFile.putFile(macroFile, macro);
+          pakFile.putFile(macroFileAbsolute, macro);
           if (macro.getCommand() != null) {
-            pakFile.putFileAsString(macroContentFile, macro.getCommand().toString());
+            pakFile.putFileAsString(macroContentFileAbsolute, macro.getCommand().toString());
           }
         }
 
@@ -904,9 +903,6 @@ public class PersistenceUtil {
               for (String potentialTokenFile : pakFile.getPaths()) {
                 String fileNameToken = getFileName(potentialTokenFile);
                 String filePathToken = getPath(potentialTokenFile);
-                if (potentialTokenFile.contains("tok")) {
-                  System.out.println(potentialFile);
-                }
                 if (filePathToken.startsWith(joinFilePaths(zoneDirectory, TOKENS_DIRECTORY))
                     && fileNameToken.startsWith(TOKEN_FILE_PREFIX)
                     && fileNameToken.endsWith(TOKEN_FILE_SUFFIX)) {
@@ -927,6 +923,8 @@ public class PersistenceUtil {
                   for (MacroFileWrapper tokenMacroFileWrapper : tokenMacroFiles) {
                     String macroFile = removeLeadingSlash(tokenMacroFileWrapper.macroFile);
                     String macroContentFile = changeFileEndingTo(macroFile, MTSCRIPT_FILE_SUFFIX);
+                    macroFile = joinFilePaths(tokenDirectory, macroFile);
+                    macroContentFile = joinFilePaths(tokenDirectory, macroContentFile);
                     // make sure file was not removed
                     if (pakFile.hasFile(macroFile)) {
                       MacroButtonProperties macroButtonProperties =
@@ -948,8 +946,11 @@ public class PersistenceUtil {
                   // check dynamically for macro files that are under token directory but
                   // not defined in token
                   for (String potentialTokenMacroFile : pakFile.getPaths()) {
-                    String fileNameTokenMacro = getFileName(potentialFile);
-                    String filePathTokenMacro = getPath(potentialFile);
+                    if (potentialTokenMacroFile.contains("Wolf")) {
+                      System.out.println("here");
+                    }
+                    String fileNameTokenMacro = getFileName(potentialTokenMacroFile);
+                    String filePathTokenMacro = getPath(potentialTokenMacroFile);
                     if (filePathTokenMacro.startsWith(
                             joinFilePaths(tokenDirectory, MACROS_DIRECTORY))
                         && fileNameTokenMacro.startsWith(MACRO_FILE_PREFIX)
