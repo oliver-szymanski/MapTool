@@ -360,141 +360,12 @@ public class PersistenceUtil {
         // save in new splitted file format
         // if not exporting to an old version that used the content.xml file
         if (campaignVersion == null || !pakFile.hasFile(PackedFile.CONTENT_FILE)) {
-          pakFile.putFile("assetMap.xml", persistedCampaign.assetMap);
-          pakFile.putFile("currentView.xml", persistedCampaign.currentView);
 
-          pakFile.getXStream().omitField(Campaign.class, "zones");
-          pakFile.getXStream().omitField(Campaign.class, "macroButtonProperties");
-          pakFile.getXStream().omitField(CampaignProperties.class, "characterSheets");
-          pakFile.getXStream().omitField(CampaignProperties.class, "lookupTableMap");
-          pakFile.putFile("characterSheets.xml", persistedCampaign.campaign.getCharacterSheets());
-          pakFile.putFile(
-              "campaignProperties.xml", persistedCampaign.campaign.getCampaignProperties());
-
-          // save tables
-          for (Entry<String, LookupTable> tableEntry :
-              persistedCampaign.campaign.getLookupTableMap().entrySet()) {
-            String tableFile =
-                joinFilePaths(
-                    TABLES_DIRECTORY,
-                    TABLE_FILE_PREFIX + fixFileName(tableEntry.getKey()) + TABLE_FILE_SUFFIX);
-            pakFile.putFile(tableFile, tableEntry.getValue());
+          if (!saveUnpackedAsDirectory) {
+            pakFile.setContent(persistedCampaign);
+          } else {
+            saveAsSplittedFilesFormat(pakFile, persistedCampaign);
           }
-
-          // save campaign macros
-          List<MacroFileWrapper> macroFilesWrapper = new LinkedList<MacroFileWrapper>();
-          pakFile.getXStream().omitField(MacroButtonProperties.class, "command");
-          for (MacroButtonProperties macro :
-              persistedCampaign.campaign.getMacroButtonProperties()) {
-            String macroFile =
-                joinFilePaths(
-                    MACROS_DIRECTORY,
-                    fixFileName(macro.getLabel()) + "_" + macro.getMacroUUID() + MACRO_FILE_SUFFIX);
-            String macroContentFile =
-                joinFilePaths(
-                    MACROS_DIRECTORY,
-                    MACRO_FILE_PREFIX
-                        + fixFileName(macro.getLabel())
-                        + "_"
-                        + macro.getMacroUUID()
-                        + MTSCRIPT_FILE_SUFFIX);
-            MacroFileWrapper macroFileWrapper = new MacroFileWrapper();
-            macroFileWrapper.index = macro.getIndex();
-            macroFileWrapper.saveLocation = macro.getSaveLocation();
-            macroFileWrapper.macroFile = macroFile;
-            macroFilesWrapper.add(macroFileWrapper);
-            pakFile.putFile(macroFile, macro);
-            if (macro.getCommand() != null) {
-              pakFile.putFileAsString(macroContentFile, macro.getCommand().toString());
-            }
-          }
-
-          pakFile.getXStream().omitField(Zone.class, "tokenOrderedList");
-          pakFile.getXStream().omitField(Zone.class, "tokenMap");
-          pakFile.getXStream().omitField(Token.class, "macroPropertiesMap");
-          pakFile.getXStream().omitField(Token.class, "macroMap");
-
-          // save zone
-          for (Zone zone : persistedCampaign.campaign.getZones()) {
-            String zonePath =
-                joinFilePaths(
-                    ZONES_DIRECTORY,
-                    fixFileName(zone.getName()) + "_" + zone.getId().toString());
-
-            // save tokens in zone
-            List<String> tokenFiles = new LinkedList<String>();
-            for (Token token : zone.getAllTokens()) {
-              String tokenPath =
-                  joinFilePaths(
-                      TOKENS_DIRECTORY,
-                      fixFileName(token.getName()) + "_" + token.getId().toString());
-              String tokenFile =
-                  joinFilePaths(
-                      zonePath,
-                      tokenPath,
-                      TOKEN_FILE_PREFIX + fixFileName(token.getName()) + TOKEN_FILE_SUFFIX);
-
-              // save token macros
-              List<MacroFileWrapper> tokenMacroFiles = new LinkedList<MacroFileWrapper>();
-              for (Map.Entry<Integer, Object> macroEntry :
-                  token.getMacroPropertiesMap(false).entrySet()) {
-                MacroButtonProperties macro = (MacroButtonProperties) macroEntry.getValue();
-                String macroFile =
-                    joinFilePaths(
-                        zonePath,
-                        tokenPath,
-                        MACROS_DIRECTORY,
-                        MACRO_FILE_PREFIX
-                            + fixFileName(macro.getLabel())
-                            + "_"
-                            + macro.getMacroUUID()
-                            + MACRO_FILE_SUFFIX);
-                String macroContentFile =
-                    joinFilePaths(
-                        zonePath,
-                        tokenPath,
-                        MACROS_DIRECTORY,
-                        MACRO_FILE_PREFIX
-                            + fixFileName(macro.getLabel())
-                            + "_"
-                            + macro.getMacroUUID()
-                            + MTSCRIPT_FILE_SUFFIX);
-                MacroFileWrapper tokenMacroFileWrapper = new MacroFileWrapper();
-                tokenMacroFileWrapper.index = macro.getIndex();
-                tokenMacroFileWrapper.saveLocation = macro.getSaveLocation();
-                tokenMacroFileWrapper.macroFile = macroFile;
-                tokenMacroFiles.add(tokenMacroFileWrapper);
-                pakFile.putFile(macroFile, macro);
-                if (macro.getCommand() != null) {
-                  pakFile.putFileAsString(macroContentFile, macro.getCommand().toString());
-                }
-              }
-
-              TokenWrapper tokenWrapper = new TokenWrapper();
-              tokenWrapper.macroFiles = tokenMacroFiles;
-              tokenWrapper.token = token;
-              pakFile.putFile(tokenFile, tokenWrapper);
-            }
-
-            String zoneFile =
-                joinFilePaths(
-                    zonePath, ZONE_FILE_PREFIX + fixFileName(zone.getName()) + ZONE_FILE_SUFFIX);
-            ZoneWrapper zoneWrapper = new ZoneWrapper();
-            zoneWrapper.zone = zone;
-
-            pakFile.putFile(zoneFile, zoneWrapper);
-          }
-
-          CampaignWrapper campaignWrapper = new CampaignWrapper();
-          campaignWrapper.mapToolVersion = persistedCampaign.mapToolVersion;
-          campaignWrapper.currentZoneId = persistedCampaign.currentZoneId;
-          campaignWrapper.exportLocation = persistedCampaign.campaign.getExportLocation();
-          campaignWrapper.exportSettings = persistedCampaign.campaign.getExportSettings();
-          campaignWrapper.macroButtonLastIndex =
-              persistedCampaign.campaign.getMacroButtonLastIndex();
-          campaignWrapper.hasUsedFogToolbar = persistedCampaign.campaign.getHasUsedFogToolbar();
-          campaignWrapper.macroFiles = macroFilesWrapper;
-          pakFile.putFile("campaign.xml", campaignWrapper);
 
           pakFile.setProperty(PROP_CAMPAIGN_VERSION, CAMPAIGN_VERSION);
           pakFile.setProperty(PROP_VERSION, MapTool.getVersion());
@@ -576,6 +447,144 @@ public class PersistenceUtil {
     }
   }
 
+  private static void saveAsSplittedFilesFormat(
+      PackedFile pakFile, PersistedCampaign persistedCampaign) throws IOException {
+    // save the new files
+    pakFile.putFile("assetMap.xml", persistedCampaign.assetMap);
+    pakFile.putFile("currentView.xml", persistedCampaign.currentView);
+
+    pakFile.getXStream().omitField(Campaign.class, "zones");
+    pakFile.getXStream().omitField(Campaign.class, "macroButtonProperties");
+    pakFile.getXStream().omitField(CampaignProperties.class, "characterSheets");
+    pakFile.getXStream().omitField(CampaignProperties.class, "lookupTableMap");
+    pakFile.putFile("characterSheets.xml", persistedCampaign.campaign.getCharacterSheets());
+    pakFile.putFile("campaignProperties.xml", persistedCampaign.campaign.getCampaignProperties());
+
+    // save tables
+    for (Entry<String, LookupTable> tableEntry :
+        persistedCampaign.campaign.getLookupTableMap().entrySet()) {
+      String tableFile =
+          joinFilePaths(
+              TABLES_DIRECTORY,
+              TABLE_FILE_PREFIX + fixFileName(tableEntry.getKey()) + TABLE_FILE_SUFFIX);
+      pakFile.putFile(tableFile, tableEntry.getValue());
+    }
+
+    // save campaign macros
+    List<MacroFileWrapper> macroFilesWrapper = new LinkedList<MacroFileWrapper>();
+    pakFile.getXStream().omitField(MacroButtonProperties.class, "command");
+    for (MacroButtonProperties macro : persistedCampaign.campaign.getMacroButtonProperties()) {
+      String macroFile =
+          joinFilePaths(
+              MACROS_DIRECTORY,
+              fixFileName(macro.getLabel())
+                  + "_"
+                  + macro.getMacroUUID().toUpperCase()
+                  + MACRO_FILE_SUFFIX);
+      String macroContentFile =
+          joinFilePaths(
+              MACROS_DIRECTORY,
+              MACRO_FILE_PREFIX
+                  + fixFileName(macro.getLabel())
+                  + "_"
+                  + macro.getMacroUUID().toUpperCase()
+                  + MTSCRIPT_FILE_SUFFIX);
+      MacroFileWrapper macroFileWrapper = new MacroFileWrapper();
+      macroFileWrapper.index = macro.getIndex();
+      macroFileWrapper.saveLocation = macro.getSaveLocation();
+      macroFileWrapper.macroFile = macroFile;
+      macroFilesWrapper.add(macroFileWrapper);
+      pakFile.putFile(macroFile, macro);
+      if (macro.getCommand() != null) {
+        pakFile.putFileAsString(macroContentFile, macro.getCommand().toString());
+      }
+    }
+
+    pakFile.getXStream().omitField(Zone.class, "tokenOrderedList");
+    pakFile.getXStream().omitField(Zone.class, "tokenMap");
+    pakFile.getXStream().omitField(Token.class, "macroPropertiesMap");
+    pakFile.getXStream().omitField(Token.class, "macroMap");
+
+    // save zone
+    for (Zone zone : persistedCampaign.campaign.getZones()) {
+      String zonePath =
+          joinFilePaths(
+              ZONES_DIRECTORY, fixFileName(zone.getName()) + "_" + zone.getId().toString());
+
+      // save tokens in zone
+      List<String> tokenFiles = new LinkedList<String>();
+      for (Token token : zone.getAllTokens()) {
+        String tokenPath =
+            joinFilePaths(
+                TOKENS_DIRECTORY, fixFileName(token.getName()) + "_" + token.getId().toString());
+        String tokenFile =
+            joinFilePaths(
+                zonePath,
+                tokenPath,
+                TOKEN_FILE_PREFIX + fixFileName(token.getName()) + TOKEN_FILE_SUFFIX);
+
+        // save token macros
+        List<MacroFileWrapper> tokenMacroFiles = new LinkedList<MacroFileWrapper>();
+        for (Map.Entry<Integer, Object> macroEntry :
+            token.getMacroPropertiesMap(false).entrySet()) {
+          MacroButtonProperties macro = (MacroButtonProperties) macroEntry.getValue();
+          String macroFile =
+              joinFilePaths(
+                  zonePath,
+                  tokenPath,
+                  MACROS_DIRECTORY,
+                  MACRO_FILE_PREFIX
+                      + fixFileName(macro.getLabel())
+                      + "_"
+                      + macro.getMacroUUID().toUpperCase()
+                      + MACRO_FILE_SUFFIX);
+          String macroContentFile =
+              joinFilePaths(
+                  zonePath,
+                  tokenPath,
+                  MACROS_DIRECTORY,
+                  MACRO_FILE_PREFIX
+                      + fixFileName(macro.getLabel())
+                      + "_"
+                      + macro.getMacroUUID().toUpperCase()
+                      + MTSCRIPT_FILE_SUFFIX);
+          MacroFileWrapper tokenMacroFileWrapper = new MacroFileWrapper();
+          tokenMacroFileWrapper.index = macro.getIndex();
+          tokenMacroFileWrapper.saveLocation = macro.getSaveLocation();
+          tokenMacroFileWrapper.macroFile = macroFile;
+          tokenMacroFiles.add(tokenMacroFileWrapper);
+          pakFile.putFile(macroFile, macro);
+          if (macro.getCommand() != null) {
+            pakFile.putFileAsString(macroContentFile, macro.getCommand().toString());
+          }
+        }
+
+        TokenWrapper tokenWrapper = new TokenWrapper();
+        tokenWrapper.macroFiles = tokenMacroFiles;
+        tokenWrapper.token = token;
+        pakFile.putFile(tokenFile, tokenWrapper);
+      }
+
+      String zoneFile =
+          joinFilePaths(
+              zonePath, ZONE_FILE_PREFIX + fixFileName(zone.getName()) + ZONE_FILE_SUFFIX);
+      ZoneWrapper zoneWrapper = new ZoneWrapper();
+      zoneWrapper.zone = zone;
+
+      pakFile.putFile(zoneFile, zoneWrapper);
+    }
+
+    CampaignWrapper campaignWrapper = new CampaignWrapper();
+    campaignWrapper.mapToolVersion = persistedCampaign.mapToolVersion;
+    campaignWrapper.currentZoneId = persistedCampaign.currentZoneId;
+    campaignWrapper.exportLocation = persistedCampaign.campaign.getExportLocation();
+    campaignWrapper.exportSettings = persistedCampaign.campaign.getExportSettings();
+    campaignWrapper.macroButtonLastIndex = persistedCampaign.campaign.getMacroButtonLastIndex();
+    campaignWrapper.hasUsedFogToolbar = persistedCampaign.campaign.getHasUsedFogToolbar();
+    campaignWrapper.macroFiles = macroFilesWrapper;
+    pakFile.putFile("campaign.xml", campaignWrapper);
+  }
+
   private static final Pattern PATTERN = Pattern.compile("[^A-Za-z0-9_\\-]");
 
   public static String joinFilePaths(String... paths) {
@@ -601,7 +610,7 @@ public class PersistenceUtil {
     while (m.find()) {
       // Convert matched character.
       // which is everything that is not allowed
-      String replacement = "_"; 
+      String replacement = "_";
       // this would map it to percent encoding, not really needed for us
       // "%" + Integer.toHexString(m.group().charAt(0)).toUpperCase();
       m.appendReplacement(sb, replacement);
