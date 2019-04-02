@@ -534,7 +534,7 @@ public class PackedFile {
 
     xstream.toXML(obj, bw);
 
-    bw.newLine(); // Not necessary but editing the file looks nicer. ;-)
+    //bw.newLine(); // Not necessary but editing the file looks nicer. ;-)
     IOUtils.closeQuietly(bw);
   }
 
