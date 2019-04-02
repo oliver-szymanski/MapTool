@@ -17,6 +17,7 @@ package net.rptools.maptool.client.functions.frameworkfunctions.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -30,6 +31,7 @@ import java.awt.event.WindowEvent;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -42,6 +44,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import net.rptools.maptool.client.MapTool;
 import net.rptools.maptool.client.functions.frameworkfunctions.ExtensionFunctionButton;
+import org.apache.commons.collections4.map.HashedMap;
 
 public class TranslucentFrame {
   private TranslucentFrame rootFrame;
@@ -55,6 +58,7 @@ public class TranslucentFrame {
   private List<TranslucentFrame> subFrames = new LinkedList<>();
   private String prefixedFrameName;
   private boolean minimized = false;
+  private Map<ExtensionFunctionButton, JButton> functionButtonsMap = new HashedMap<>();
 
   @SuppressWarnings("unused")
   private String prefixedFrameId;
@@ -273,7 +277,7 @@ public class TranslucentFrame {
     JButton button;
     ImageIcon icon = null;
 
-    if (functionButton.getImageFile() != null) {
+    if (functionButton.getImageFile() != null && functionButton.getImageFile().length() > 0) {
       icon = createImageIcon(functionButton, functionButton.getImageFile());
     }
 
@@ -363,13 +367,64 @@ public class TranslucentFrame {
     }
   }
 
+  public void remove(ExtensionFunctionButton functionButton) {
+    JButton jButton = functionButtonsMap.get(functionButton);
+    Container parent = jButton.getParent();
+    parent.remove(jButton);
+    if (this.group == null) {
+      actualFrame.invalidate();
+      actualFrame.repaint();
+    } else {
+      subTab.invalidate();
+      subTab.repaint();
+    }
+    functionButtonsMap.remove(functionButton);
+  }
+
+  public void enable(ExtensionFunctionButton functionButton) {
+    JButton jButton = functionButtonsMap.get(functionButton);
+    jButton.setEnabled(true);
+  }
+
+  public void disable(ExtensionFunctionButton functionButton) {
+    JButton jButton = functionButtonsMap.get(functionButton);
+    jButton.setEnabled(false);
+  }
+
+  public boolean isEnabled(ExtensionFunctionButton functionButton) {
+    JButton jButton = functionButtonsMap.get(functionButton);
+    return jButton.isEnabled();
+  }
+
+  public void hide(ExtensionFunctionButton functionButton) {
+    JButton jButton = functionButtonsMap.get(functionButton);
+    jButton.setVisible(false);
+  }
+
+  public void show(ExtensionFunctionButton functionButton) {
+    JButton jButton = functionButtonsMap.get(functionButton);
+    jButton.setVisible(true);
+  }
+
+  public boolean isHidden(ExtensionFunctionButton functionButton) {
+    JButton jButton = functionButtonsMap.get(functionButton);
+    return jButton.isVisible();
+  }
+
   public void add(ExtensionFunctionButton functionButton) {
     JButton jButton = createButton(functionButton);
+    functionButtonsMap.put(functionButton, jButton);
 
     if (this.group == null) {
       actualFrame.add(jButton);
+      actualFrame.invalidate();
+      actualFrame.repaint();
     } else {
       subTab.add(jButton);
+      subTab.invalidate();
+      subTab.repaint();
+      rootFrame.actualFrame.invalidate();
+      rootFrame.actualFrame.repaint();
     }
     jButton.addActionListener(
         e -> {

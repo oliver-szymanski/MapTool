@@ -35,8 +35,7 @@ class SecurityManagerPackageAccess extends SecurityManager {
           && !pkg.equals("net.rptools.maptool.client.ui.commandpanel")
           && !pkg.equals("net.rptools.maptool.client.functions")
           && !pkg.equals("net.rptools.maptool.client.functions.frameworkfunctions")
-          && !pkg.equals("net.rptools.maptool.model")
-      ){
+          && !pkg.equals("net.rptools.maptool.model")) {
         checkPermission(new RuntimePermission("accessClassInPackage." + pkg));
       }
     } catch (Exception e) {

@@ -43,7 +43,7 @@ class FrameworkClassLoader extends URLClassLoader {
         copyPermissions(super.getPermissions(origin), perms);
         origins.add(origin);
       }
-      //perms.setReadOnly();
+      // perms.setReadOnly();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -70,7 +70,7 @@ class FrameworkClassLoader extends URLClassLoader {
         return perms;
       }
     }
-    //return perms;
+    // return perms;
     return super.getPermissions(cs);
   }
 }

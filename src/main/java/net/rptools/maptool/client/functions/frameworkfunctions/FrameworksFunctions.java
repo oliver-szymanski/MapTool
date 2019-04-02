@@ -88,7 +88,7 @@ public class FrameworksFunctions implements Function {
   static {
     // initialization of the allowed permissions
     PermissionCollection allowedPermissions = new Permissions();
-    //allowedPermissions.add(new PropertyPermission("*", "read"));
+    // allowedPermissions.add(new PropertyPermission("*", "read"));
     // allowedPermissions.add(new RuntimePermission("accessDeclaredMembers"));
     // ... <many more permissions here> ...
     accessControlContextForExtensionFunctions =
@@ -308,7 +308,7 @@ public class FrameworksFunctions implements Function {
                   Class.forName(frameworkFunctionBundle.toString(), true, frameworkClassLoader)
                       .getDeclaredConstructor()
                       .newInstance();
-          
+
           MapTool.addLocalMessage(
               "imported bundle: '"
                   + frameworkFunctionBundle.toString()
@@ -389,23 +389,8 @@ public class FrameworksFunctions implements Function {
           continue;
         }
 
-        functionButton.setPrefix(prefix);
-        String frame = functionButton.getFrame();
-        if (prefix != null && prefix.length() > 0) {
-          frame = prefix + frame;
-        }
-        ButtonFrame buttonFrame = buttonFrames.get(frame);
-        if (buttonFrame == null) {
-          buttonFrame =
-              new ButtonFrame(
-                  functionButton.getFrame(),
-                  functionButton.getPrefixedFrame(),
-                  functionButton.getPrefixedFrameId());
-          newButtonFrames.add(frame);
-          buttonFrames.put(frame, buttonFrame);
-        }
-
-        buttonFrame.add(functionButton);
+        this.addExtensionFunctionButton(functionButton, prefix);
+        newButtonFrames.add(functionButton.getFrame());
       }
 
       if (Boolean.FALSE.equals(
@@ -445,6 +430,52 @@ public class FrameworksFunctions implements Function {
         "bundle " + frameworkFunctionBundle + " defined functions: " + functions);
 
     return BigDecimal.ONE;
+  }
+
+  public ExtensionFunctionButton getExtensionFunctionButton(
+      String name, String group, String frame, String prefix) {
+    if (prefix != null && prefix.length() > 0) {
+      frame = prefix + frame;
+    }
+
+    ButtonFrame buttonFrame = buttonFrames.get(frame);
+    if (buttonFrame == null) {
+      return null;
+    }
+
+    return buttonFrame.getExtensionFunctionButton(name, group);
+  }
+
+  public void addExtensionFunctionButton(ExtensionFunctionButton extensionFunctionButton) {
+    addExtensionFunctionButton(extensionFunctionButton, null);
+  }
+
+  public ButtonFrame getButtonFrame(String frame, String prefix) {
+    if (prefix != null && prefix.length() > 0) {
+      frame = prefix + frame;
+    }
+
+    return buttonFrames.get(frame);
+  }
+
+  private void addExtensionFunctionButton(
+      ExtensionFunctionButton extensionFunctionButton, String prefix) {
+    extensionFunctionButton.setPrefix(prefix);
+    String frame = extensionFunctionButton.getFrame();
+    if (prefix != null && prefix.length() > 0) {
+      frame = prefix + frame;
+    }
+    ButtonFrame buttonFrame = buttonFrames.get(frame);
+    if (buttonFrame == null) {
+      buttonFrame =
+          new ButtonFrame(
+              extensionFunctionButton.getFrame(),
+              extensionFunctionButton.getPrefixedFrame(),
+              extensionFunctionButton.getPrefixedFrameId());
+      buttonFrames.put(frame, buttonFrame);
+    }
+
+    buttonFrame.add(extensionFunctionButton);
   }
 
   private Object executeFunction(Parser parser, String functionName, List<Object> parameters)
@@ -534,7 +565,8 @@ public class FrameworksFunctions implements Function {
     return result;
   }
 
-  static <T> T executeNotPrivileged(Run<T> runnable, boolean restrictFurther) throws ParserException {
+  static <T> T executeNotPrivileged(Run<T> runnable, boolean restrictFurther)
+      throws ParserException {
     T result = null;
     try {
       // run runnable in a controlled environment with restrictions
@@ -543,23 +575,22 @@ public class FrameworksFunctions implements Function {
       // SecurityManagerPackageAccess
       // (Functions loaded as extension but inside the main libs are
       // having normal access control).
-      
+
       // classes calling this are already restrict by ACC during classloading
       // and by security manager. only call doPriviledged with another
       // ACC if you want to further reduce the access even for whatever
       // is called now in the callstack.
-      
+
       if (!restrictFurther) {
         result = runnable.run();
       } else {
-          AccessController.doPrivileged(
-              new PrivilegedExceptionAction<>() {
-                public T run() throws Exception {
-                  return 
-          runnable.run();
-                }
-              },
-              accessControlContextForExtensionFunctions);
+        AccessController.doPrivileged(
+            new PrivilegedExceptionAction<>() {
+              public T run() throws Exception {
+                return runnable.run();
+              }
+            },
+            accessControlContextForExtensionFunctions);
       }
     } catch (Exception e) {
       throw new ParserException(e);
@@ -576,7 +607,8 @@ public class FrameworksFunctions implements Function {
               public Object run() throws ParserException {
                 return function.run(parser, alias, parameters);
               }
-            }, false);
+            },
+            false);
     return result;
   }
 
@@ -592,7 +624,8 @@ public class FrameworksFunctions implements Function {
               chatMacro.run(context, macroName, executionContext);
               return null;
             }
-          }, false);
+          },
+          false);
     } catch (ParserException e) {
       e.printStackTrace();
     }
@@ -609,7 +642,8 @@ public class FrameworksFunctions implements Function {
             functionButton.run(parser.getParser());
             return null;
           }
-        }, false);
+        },
+        false);
   }
 
   public String[] getAliases() {

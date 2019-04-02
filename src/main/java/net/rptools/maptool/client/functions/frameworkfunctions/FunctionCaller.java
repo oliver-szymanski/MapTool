@@ -225,6 +225,14 @@ public class FunctionCaller {
     return false;
   }
 
+  public static BigDecimal fromBoolean(Boolean val) {
+    if (Boolean.TRUE.equals(val)) {
+      return BigDecimal.ONE;
+    }
+
+    return BigDecimal.ZERO;
+  }
+
   /**
    * This ensure the token that you modify in the run command is put/save on it's correct map. Do
    * not change the map/zone/zoneRenderer in the run command.
