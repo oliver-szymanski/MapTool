@@ -649,7 +649,6 @@ public class FrameworksFunctions implements Function {
   public String[] getAliases() {
     if (aliases == null) {
       aliases = getFrameworksFunctionNames();
-      return new String[0];
     }
 
     return aliases;
