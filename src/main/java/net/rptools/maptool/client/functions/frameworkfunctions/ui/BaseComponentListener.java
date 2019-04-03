@@ -21,12 +21,14 @@ import java.awt.event.ComponentListener;
 import java.util.HashMap;
 import java.util.Map;
 import net.rptools.maptool.client.MapTool;
+import net.rptools.maptool.client.functions.frameworkfunctions.FrameworksFunctions;
 
 public class BaseComponentListener implements ComponentListener {
 
   public static BaseComponentListener instance = new BaseComponentListener();
 
   private TranslucentFrame chatFrame;
+  private TranslucentFrame initiativeFrame;
   private Map<Component, Container> originalParentContainer = new HashMap<Component, Container>();
 
   @Override
@@ -37,12 +39,16 @@ public class BaseComponentListener implements ComponentListener {
 
   @Override
   public void componentShown(ComponentEvent e) {
-    // happens when fullscreen is closed
-    if (e.getComponent().equals(MapTool.getFrame())) {
-
+  	if (e.getComponent().equals(MapTool.getFrame().getGlassPane())) {
+  		FrameworksFunctions.getInstance().init();
+  	} else if (e.getComponent().equals(MapTool.getFrame())) {
+  		// happens when fullscreen is closed
+      
       // restore chat to orginal frame
       Container container = originalParentContainer.get(MapTool.getFrame().getCommandPanel());
       container.add(MapTool.getFrame().getCommandPanel());
+      container = originalParentContainer.get(MapTool.getFrame().getInitiativePanel());
+      container.add(MapTool.getFrame().getInitiativePanel());
 
       MapTool.getFrame().showCommandPanel();
       chatFrame.setMinimized(false);
@@ -50,6 +56,10 @@ public class BaseComponentListener implements ComponentListener {
       chatFrame.removeComponentListener(this);
       MapTool.getFrame().getChatActionLabel().removeComponentListener(this);
       chatFrame = null;
+      
+      initiativeFrame.setMinimized(false);
+      initiativeFrame.close();
+      
       originalParentContainer.clear();
     } else if (e.getComponent().equals(MapTool.getFrame().getChatActionLabel())) {
       if (chatFrame != null && chatFrame.isVisble() && !chatFrame.isMinimized()) {
@@ -72,11 +82,17 @@ public class BaseComponentListener implements ComponentListener {
           MapTool.getFrame().getChatTypingPanel().getParent());
       originalParentContainer.put(
           MapTool.getFrame().getCommandPanel(), MapTool.getFrame().getCommandPanel().getParent());
+      originalParentContainer.put(
+          MapTool.getFrame().getInitiativePanel(), MapTool.getFrame().getInitiativePanel().getParent());
 
       chatFrame =
           new TranslucentFrame("Chat", "Chat", "Chat", null, MapTool.getFrame().getCommandPanel());
       chatFrame.show();
       chatFrame.addComponentListener(this);
+      initiativeFrame =
+          new TranslucentFrame("Initiative", "Initiative", "Initiative", null, MapTool.getFrame().getInitiativePanel());
+      initiativeFrame.show();
+      initiativeFrame.addComponentListener(this);
       // add this as a component listener to check the chat new message notification
       MapTool.getFrame().getChatActionLabel().addComponentListener(this);
     }

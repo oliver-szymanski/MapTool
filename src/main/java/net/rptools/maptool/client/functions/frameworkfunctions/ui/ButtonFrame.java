@@ -191,6 +191,22 @@ public class ButtonFrame {
     return result;
   }
 
+  public boolean close() {
+    if (frame == null) {
+      return false;
+    }
+    boolean result = frame.isVisble();
+    Runnable openInspector =
+        new Runnable() {
+          @Override
+          public void run() {
+            frame.close();
+          }
+        };
+    SwingUtilities.invokeLater(openInspector);
+    return result;
+  }
+  
   public void clear() {
     functionButtons.clear();
     buttonFrames.clear();
