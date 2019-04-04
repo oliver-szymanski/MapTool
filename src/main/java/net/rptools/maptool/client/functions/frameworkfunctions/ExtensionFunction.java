@@ -30,12 +30,12 @@ public abstract class ExtensionFunction {
   private String[] aliasNames;
   private Alias[] extensionFunctionAliases;
 
-  public ExtensionFunction(boolean trustedRequired, String... aliases) {
-    this(trustedRequired, Arrays.stream(aliases).map(a -> Alias.create(a)).toArray(Alias[]::new));
+  public ExtensionFunction(String... aliases) {
+    this(Arrays.stream(aliases).map(a -> Alias.create(a)).toArray(Alias[]::new));
   }
 
-  public ExtensionFunction(boolean trustedRequired, Alias... aliases) {
-    this.trustedRequired = trustedRequired;
+  public ExtensionFunction(Alias... aliases) {
+    this.trustedRequired = true;
     this.extensionFunctionAliases = aliases;
     this.aliasNames = Arrays.stream(aliases).map(a -> a.getFunctionName()).toArray(String[]::new);
   }
@@ -90,19 +90,23 @@ public abstract class ExtensionFunction {
     for (Alias alias : extensionFunctionAliases) {
       if (alias.functionName.equals(functionName)) {
         notFound = false;
+        if (trustedRequired && alias.trustedRequired) {
+        	raiseExceptionIfNotTrustedContext(functionName);
+        }
         checkParameters(parser, functionName, parameters);
       }
     }
+    
     if (notFound) {
-      throw new ParserException("not found function: " + functionName);
-    }
-
-    if (trustedRequired && !MapTool.getParser().isMacroTrusted()) {
-      throw new ParserException(I18N.getText("macro.function.general.noPerm", functionName));
+      throwNotFoundParserException(functionName);
     }
 
     return run(parser, functionName, parameters);
   }
+
+	protected Object throwNotFoundParserException(String functionName) throws ParserException {
+		throw new ParserException("not found function: " + functionName);
+	}
 
   protected String getPrefix() {
     return prefix;
@@ -115,11 +119,20 @@ public abstract class ExtensionFunction {
   public String[] getAliases() {
     return this.aliasNames;
   }
+  
+  protected void setTrustedRequired(boolean trustedRequired) {
+  	this.trustedRequired = trustedRequired;
+  }
+
+	public boolean isTrustedRequired() {
+		return trustedRequired;
+	}
 
   public static class Alias {
     private String functionName;
     private int minParameters;
     private int maxParameters;
+    private boolean trustedRequired;
 
     public static Alias create(String functionName) {
       return new Alias(functionName);
@@ -137,6 +150,7 @@ public abstract class ExtensionFunction {
       this.functionName = functionName;
       this.minParameters = minParameters;
       this.maxParameters = maxParameters;
+      this.trustedRequired = true;
     }
 
     public String getFunctionName() {
@@ -150,5 +164,22 @@ public abstract class ExtensionFunction {
     public int getMaxParameters() {
       return maxParameters;
     }
+    
+    public Alias setTrustedRequired(boolean trustedRequired) {
+    	this.trustedRequired = trustedRequired;
+    	return this;
+    }
+
+		public boolean isTrustedRequired() {
+			return trustedRequired;
+		}
+    
+    
+  }
+  
+  protected void raiseExceptionIfNotTrustedContext(String functionName) throws ParserException {
+  	if (!MapTool.getParser().isMacroTrusted()) {
+			throw new ParserException(I18N.getText("macro.function.general.noPerm", functionName));
+		}
   }
 }
