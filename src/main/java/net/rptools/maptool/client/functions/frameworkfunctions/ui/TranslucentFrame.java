@@ -41,6 +41,7 @@ import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JWindow;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import net.rptools.maptool.client.MapTool;
 import net.rptools.maptool.client.functions.frameworkfunctions.ExtensionFunctionButton;
@@ -48,7 +49,7 @@ import org.apache.commons.collections4.map.HashedMap;
 
 public class TranslucentFrame {
   private TranslucentFrame rootFrame;
-  private JFrame actualFrame;
+  private JWindow actualFrame;
   private JPanel contentContainer;
   private JTabbedPane tabbedPane;
   private JPanel title;
@@ -115,19 +116,18 @@ public class TranslucentFrame {
   }
 
   private void initRootFrame() {
-    actualFrame = new JFrame(frameName);
+    actualFrame = new JWindow(); //frameName);
     actualFrame.setLayout(new BorderLayout());
     // actualFrame.setLayout(new GridLayout(30,30,30,30));
     actualFrame.setSize(300, 200);
 
     loadPreferences(false);
 
-    actualFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-    actualFrame.setUndecorated(true);
+//    actualFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+  //  actualFrame.setUndecorated(true);
     actualFrame.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
     actualFrame.setOpacity(0.55f);
     actualFrame.setAlwaysOnTop(true);
-    actualFrame.setResizable(true);
     JLabel label = new JLabel(prefixedFrameName);
     label.setFont(label.getFont().deriveFont(14f));
     label.addMouseListener(
@@ -139,9 +139,27 @@ public class TranslucentFrame {
             }
           }
         });
+    JLabel pack = new JLabel("# ");
+    pack.setFont(pack.getFont().deriveFont(12f));
+    pack.addMouseListener(
+        new MouseAdapter() {
+          public void mouseClicked(MouseEvent event) {
+            actualFrame.pack();
+          }
+        });
+    JLabel close = new JLabel(" x");
+    close.setFont(close.getFont().deriveFont(14f));
+    close.addMouseListener(
+        new MouseAdapter() {
+          public void mouseClicked(MouseEvent event) {
+            close();
+          }
+        });
     // label.setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
     title = new JPanel();
+    title.add(pack);
     title.add(label);
+    title.add(close);
     actualFrame.add(title, BorderLayout.NORTH);
 
     tabbedPane = new JTabbedPane();
@@ -475,23 +493,22 @@ public class TranslucentFrame {
   }
 
   public void setMinimized(boolean minimized) {
-    this.minimized = minimized;
-
     // save preferences before minimizing
     if (contentContainer.isVisible() && minimized) {
       savePreferences();
     }
 
-    // load preferences if restoring
-    if (!minimized) {
-      loadPreferences(true);
-      contentContainer.setVisible(true);
-    } else {
-      this.minimized = true;
+    this.minimized = minimized;
+
+    if (minimized) {
       contentContainer.setVisible(false);
       actualFrame.pack();
+    } else {
+      // load preferences if restoring
+      loadPreferences(true);
+      contentContainer.setVisible(true);
     }
-
+    
     actualFrame.invalidate();
   }
 }

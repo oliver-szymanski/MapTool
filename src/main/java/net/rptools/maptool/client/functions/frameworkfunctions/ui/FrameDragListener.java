@@ -14,19 +14,19 @@
  */
 package net.rptools.maptool.client.functions.frameworkfunctions.ui;
 
+import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import javax.swing.JFrame;
 
 public class FrameDragListener extends MouseAdapter {
 
-  private final JFrame frameToMove;
+  private final Component frameToMove;
 
   private boolean enabled;
   private Point mouseDownCompCoords = null;
 
-  public FrameDragListener(JFrame frameToMove) {
+  public FrameDragListener(Component frameToMove) {
     this.frameToMove = frameToMove;
     this.enabled = true;
   }
