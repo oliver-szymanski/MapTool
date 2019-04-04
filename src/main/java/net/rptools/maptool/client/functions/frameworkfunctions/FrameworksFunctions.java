@@ -460,7 +460,7 @@ public class FrameworksFunctions implements Function {
     return buttonFrames.get(frame);
   }
 
-  private void addExtensionFunctionButton(
+  public void addExtensionFunctionButton(
       ExtensionFunctionButton extensionFunctionButton, String prefix) {
     extensionFunctionButton.setPrefix(prefix);
     String frame = extensionFunctionButton.getFrame();
