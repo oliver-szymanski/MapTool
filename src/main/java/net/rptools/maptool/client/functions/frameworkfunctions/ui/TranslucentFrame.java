@@ -49,7 +49,7 @@ import org.apache.commons.collections4.map.HashedMap;
 
 public class TranslucentFrame {
   private TranslucentFrame rootFrame;
-  private JWindow actualFrame;
+  private JFrame actualFrame;
   private JPanel contentContainer;
   private JTabbedPane tabbedPane;
   private JPanel title;
@@ -116,15 +116,14 @@ public class TranslucentFrame {
   }
 
   private void initRootFrame() {
-    actualFrame = new JWindow(); //frameName);
+    actualFrame = new JFrame(frameName);
     actualFrame.setLayout(new BorderLayout());
     // actualFrame.setLayout(new GridLayout(30,30,30,30));
     actualFrame.setSize(300, 200);
-
     loadPreferences(false);
 
-//    actualFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-  //  actualFrame.setUndecorated(true);
+    actualFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    actualFrame.setUndecorated(true);
     actualFrame.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
     actualFrame.setOpacity(0.55f);
     actualFrame.setAlwaysOnTop(true);
@@ -155,11 +154,20 @@ public class TranslucentFrame {
             close();
           }
         });
+    JLabel minimize = new JLabel(" -");
+    minimize.setFont(minimize.getFont().deriveFont(14f));
+    minimize.addMouseListener(
+        new MouseAdapter() {
+          public void mouseClicked(MouseEvent event) {
+            actualFrame.setState(JFrame.ICONIFIED);
+          }
+        });
     // label.setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
     title = new JPanel();
     title.add(pack);
     title.add(label);
     title.add(close);
+    title.add(minimize);
     actualFrame.add(title, BorderLayout.NORTH);
 
     tabbedPane = new JTabbedPane();
