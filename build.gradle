@@ -139,7 +139,8 @@ repositories {
     mavenCentral()
     maven { url = 'http://maptool.craigs-stuff.net/repo/' }
     maven { url = 'http://www.nerps.net/repo/' }
-    maven { url = 'http://nexus.fyiblue.com/content/groups/public' }
+    // removed cause it does not seem to exist
+    //maven { url = 'http://nexus.fyiblue.com/content/groups/public' }
     mavenLocal()
 }
 
