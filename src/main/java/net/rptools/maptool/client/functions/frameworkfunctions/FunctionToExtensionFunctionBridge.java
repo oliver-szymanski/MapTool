@@ -45,7 +45,6 @@ public abstract class FunctionToExtensionFunctionBridge extends ExtensionFunctio
       boolean deterministic,
       String... aliases) {
     super(
-        trustedRequired,
         Arrays.stream(aliases)
             .map(a -> Alias.create(a, minParameters, maxParameters))
             .toArray(Alias[]::new));
@@ -53,6 +52,7 @@ public abstract class FunctionToExtensionFunctionBridge extends ExtensionFunctio
     this.maxParameters = maxParameters;
     this.deterministic = deterministic;
     this.aliases = aliases;
+    setTrustedRequired(trustedRequired);
   }
 
   public final String[] getAliases() {

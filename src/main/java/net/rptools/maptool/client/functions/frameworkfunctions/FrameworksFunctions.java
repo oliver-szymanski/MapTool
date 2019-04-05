@@ -134,7 +134,7 @@ public class FrameworksFunctions implements Function {
     return FUNCTION_NAMES;
   }
 
-  private synchronized void init() {
+  public synchronized void init() {
     frameworkFunctions.clear();
     frameworkFunctionsAliasMap.clear();
     frameworkAliasPrefixMap.clear();
@@ -144,6 +144,7 @@ public class FrameworksFunctions implements Function {
     }
 
     for (ButtonFrame buttonFrame : buttonFrames.values()) {
+    	buttonFrame.hide();
       buttonFrame.clear();
     }
     buttonFrames.clear();
@@ -228,6 +229,7 @@ public class FrameworksFunctions implements Function {
   private synchronized void registerMapToolFrameListener() {
     if (MapTool.getFrame() != null && !windowComponentListening) {
       MapTool.getFrame().addComponentListener(BaseComponentListener.instance);
+      MapTool.getFrame().getGlassPane().addComponentListener(BaseComponentListener.instance);
       windowComponentListening = true;
     }
   }
@@ -458,7 +460,7 @@ public class FrameworksFunctions implements Function {
     return buttonFrames.get(frame);
   }
 
-  private void addExtensionFunctionButton(
+  public void addExtensionFunctionButton(
       ExtensionFunctionButton extensionFunctionButton, String prefix) {
     extensionFunctionButton.setPrefix(prefix);
     String frame = extensionFunctionButton.getFrame();
@@ -576,11 +578,10 @@ public class FrameworksFunctions implements Function {
       // (Functions loaded as extension but inside the main libs are
       // having normal access control).
 
-      // classes calling this are already restrict by ACC during classloading
+      // classes calling this are already restricted by ACC during classloading
       // and by security manager. only call doPriviledged with another
       // ACC if you want to further reduce the access even for whatever
       // is called now in the callstack.
-
       if (!restrictFurther) {
         result = runnable.run();
       } else {
@@ -649,7 +650,6 @@ public class FrameworksFunctions implements Function {
   public String[] getAliases() {
     if (aliases == null) {
       aliases = getFrameworksFunctionNames();
-      return new String[0];
     }
 
     return aliases;
