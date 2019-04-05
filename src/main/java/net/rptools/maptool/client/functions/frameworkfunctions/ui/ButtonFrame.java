@@ -53,7 +53,7 @@ public class ButtonFrame {
   }
 
   public boolean remove(ExtensionFunctionButton functionButton) {
-    if (functionButton.getGroup() != null && this.group == null) {
+    if (functionButton.getGroup() != null && functionButton.getGroup().length()>0 && this.group == null) {
       ButtonFrame subFrame = buttonFrames.get(functionButton.getGroup());
       subFrame.frame.remove(functionButton);
       subFrame.functionButtonsMap.remove(functionButton.getName());

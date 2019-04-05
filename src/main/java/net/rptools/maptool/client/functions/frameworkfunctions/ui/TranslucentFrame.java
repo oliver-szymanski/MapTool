@@ -368,17 +368,23 @@ public class TranslucentFrame {
   }
 
   public void remove(ExtensionFunctionButton functionButton) {
-    JButton jButton = functionButtonsMap.get(functionButton);
-    Container parent = jButton.getParent();
-    parent.remove(jButton);
-    if (this.group == null) {
-      actualFrame.invalidate();
-      actualFrame.repaint();
-    } else {
-      subTab.invalidate();
-      subTab.repaint();
-    }
     functionButtonsMap.remove(functionButton);
+    JButton jButton = functionButtonsMap.get(functionButton);
+
+    if (jButton != null) {
+      Container parent = jButton.getParent();
+      parent.remove(jButton);
+      if (this.group == null) {
+        actualFrame.invalidate();
+        actualFrame.repaint();
+      } else {
+        subTab.invalidate();
+        subTab.repaint();
+      }
+    } else {
+      String name = functionButton.getName();
+    }
+    
   }
 
   public void enable(ExtensionFunctionButton functionButton) {
