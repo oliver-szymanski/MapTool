@@ -52,6 +52,14 @@ public class ButtonFrame {
     this.frame = new TranslucentFrame(name, prefixedFrameName, prefixedFrameId, group, root.frame);
   }
 
+  public void update(ExtensionFunctionButton functionButton) {
+    TranslucentFrame frame = this.frame;
+    if (functionButton.getGroup() != null) {
+      frame = buttonFrames.get(functionButton.getGroup()).frame;
+    }
+    frame.update(functionButton);
+  }
+  
   public boolean remove(ExtensionFunctionButton functionButton) {
     if (functionButton.getGroup() != null && functionButton.getGroup().length()>0 && this.group == null) {
       ButtonFrame subFrame = buttonFrames.get(functionButton.getGroup());
@@ -124,7 +132,8 @@ public class ButtonFrame {
 
       if (subButtonFrame.functionButtonsMap.containsKey(functionButton.getName())) {
         // remove to override if that name already exists
-        subButtonFrame.remove(functionButton);
+        ExtensionFunctionButton previousButton = subButtonFrame.functionButtonsMap.get(functionButton.getName());
+        subButtonFrame.remove(previousButton);
       }
       subButtonFrame.functionButtons.add(functionButton);
       subButtonFrame.functionButtonsMap.put(functionButton.getName(), functionButton);
@@ -132,7 +141,8 @@ public class ButtonFrame {
     } else {
       if (functionButtonsMap.containsKey(functionButton.getName())) {
         // remove to override if that name already exists
-        remove(functionButton);
+        ExtensionFunctionButton previousButton = functionButtonsMap.get(functionButton.getName());
+        remove(previousButton);
       }
       functionButtons.add(functionButton);
       functionButtonsMap.put(functionButton.getName(), functionButton);

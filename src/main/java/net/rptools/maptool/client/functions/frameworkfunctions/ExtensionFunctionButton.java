@@ -23,37 +23,44 @@ import net.rptools.parser.ParserException;
 public abstract class ExtensionFunctionButton {
 
   private String name;
+  private String text;
   private String tooltip;
   private String group;
   private String frame;
   private String imageFile;
-  private boolean nameAndImage;
+  private boolean textAndImage;
   private final boolean trustedRequired;
   private String prefix = null;
 
   public ExtensionFunctionButton(
       String name,
+      String text,
       String tooltip,
       String group,
       String frame,
       String imageFile,
-      boolean nameAndImage,
+      boolean textAndImage,
       boolean trustedRequired) {
     this.trustedRequired = trustedRequired;
     this.name = name;
+    this.text = text;
     this.tooltip = tooltip;
     this.group = group;
     this.frame = frame;
     this.imageFile = imageFile;
-    this.nameAndImage = nameAndImage;
+    this.textAndImage = textAndImage;
   }
 
+  public void setImageFile(String imageFile) {
+    this.imageFile = imageFile;
+  }
+  
   public String getImageFile() {
     return imageFile;
   }
 
-  public boolean isNameAndImage() {
-    return nameAndImage;
+  public boolean isTextAndImage() {
+    return textAndImage;
   }
 
   public abstract void run(Parser parser) throws ParserException;
@@ -80,6 +87,10 @@ public abstract class ExtensionFunctionButton {
   public String getName() {
     return name;
   }
+  
+  public String getText() {
+    return text;
+  }
 
   public String getPrefixedFrame() {
     if (this.prefix != null && prefix.length() > 0) {
@@ -97,6 +108,11 @@ public abstract class ExtensionFunctionButton {
 
   public void setName(String name) {
     this.name = name;
+  }
+  
+  public void setText(String text) {
+    this.textAndImage = true;
+    this.text = text;
   }
 
   public String getTooltip() {

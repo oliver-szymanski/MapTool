@@ -28,6 +28,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,10 +42,13 @@ import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JWindow;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
+
+import net.rptools.lib.MD5Key;
 import net.rptools.maptool.client.MapTool;
 import net.rptools.maptool.client.functions.frameworkfunctions.ExtensionFunctionButton;
+import net.rptools.maptool.util.ImageManager;
+
 import org.apache.commons.collections4.map.HashedMap;
 
 public class TranslucentFrame {
@@ -125,7 +129,7 @@ public class TranslucentFrame {
     actualFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     actualFrame.setUndecorated(true);
     actualFrame.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
-    actualFrame.setOpacity(0.55f);
+    actualFrame.setOpacity(0.65f);
     actualFrame.setAlwaysOnTop(true);
     JLabel label = new JLabel(prefixedFrameName);
     label.setFont(label.getFont().deriveFont(14f));
@@ -166,8 +170,8 @@ public class TranslucentFrame {
     title = new JPanel();
     title.add(pack);
     title.add(label);
-    title.add(close);
     title.add(minimize);
+    title.add(close);
     actualFrame.add(title, BorderLayout.NORTH);
 
     tabbedPane = new JTabbedPane();
@@ -299,32 +303,6 @@ public class TranslucentFrame {
     contentContainer.removeComponentListener(listener);
   }
 
-  private JButton createButton(ExtensionFunctionButton functionButton) {
-    JButton button;
-    ImageIcon icon = null;
-
-    if (functionButton.getImageFile() != null && functionButton.getImageFile().length() > 0) {
-      icon = createImageIcon(functionButton, functionButton.getImageFile());
-    }
-
-    if (functionButton.isNameAndImage() || icon == null) {
-      button = new JButton(functionButton.getName());
-    } else {
-      button = new JButton();
-    }
-
-    button.setToolTipText(functionButton.getTooltip());
-    button.setFont(new Font("Serif", Font.PLAIN, 16));
-    button.setBackground(new Color(50, 50, 50)); // import java.awt.Color;
-    button.setForeground(Color.WHITE);
-    button.setFocusPainted(false);
-    button.setBorderPainted(false);
-    if (icon != null) {
-      button.setIcon(icon);
-    }
-    return button;
-  }
-
   private void savePreferences() {
     PreferenceManager.savePreference(
         actualFrame.getLocation().x,
@@ -394,8 +372,8 @@ public class TranslucentFrame {
   }
 
   public void remove(ExtensionFunctionButton functionButton) {
-    functionButtonsMap.remove(functionButton);
     JButton jButton = functionButtonsMap.get(functionButton);
+    functionButtonsMap.remove(functionButton);
 
     if (jButton != null) {
       Container parent = jButton.getParent();
@@ -407,12 +385,31 @@ public class TranslucentFrame {
         subTab.invalidate();
         subTab.repaint();
       }
-    } else {
-      String name = functionButton.getName();
     }
-    
   }
 
+  public void update(ExtensionFunctionButton functionButton) {
+    JButton button = functionButtonsMap.get(functionButton);
+    ImageIcon icon = null;
+        
+    if (functionButton.getImageFile() != null && functionButton.getImageFile().length() > 0) {
+      icon = createImageIcon(functionButton);
+    }
+
+    if (functionButton.isTextAndImage() || icon == null) {
+      button.setText(functionButton.getText());
+    }
+    button.setToolTipText(functionButton.getTooltip());
+    button.setFont(new Font("Serif", Font.PLAIN, 16));
+    button.setBackground(new Color(50, 50, 50)); // import java.awt.Color;
+    button.setForeground(Color.WHITE);
+    button.setFocusPainted(false);
+    button.setBorderPainted(false);
+    if (icon != null) {
+      button.setIcon(icon);
+    }
+  }
+  
   public void enable(ExtensionFunctionButton functionButton) {
     JButton jButton = functionButtonsMap.get(functionButton);
     jButton.setEnabled(true);
@@ -444,9 +441,10 @@ public class TranslucentFrame {
   }
 
   public void add(ExtensionFunctionButton functionButton) {
-    JButton jButton = createButton(functionButton);
+    JButton jButton = new JButton();;    
     functionButtonsMap.put(functionButton, jButton);
-
+    update(functionButton);
+    
     if (this.group == null) {
       actualFrame.add(jButton);
       actualFrame.invalidate();
@@ -469,24 +467,31 @@ public class TranslucentFrame {
   }
 
   /** Returns an ImageIcon, or null if the path was invalid. */
-  protected ImageIcon createImageIcon(ExtensionFunctionButton functionButton, String path) {
+  protected ImageIcon createImageIcon(ExtensionFunctionButton functionButton) {
 
+    if (functionButton == null) {
+      return null;
+    }
+    
+    String path = functionButton.getImageFile();
     if (path == null) {
       return null;
     }
+    path = path.trim();
 
-    Object objectForClassload = functionButton;
-    if (functionButton == null) {
-      objectForClassload = this;
+    if (path.startsWith("asset://")) {
+      MD5Key assetId = new MD5Key(path.substring(8));
+      BufferedImage image = ImageManager.getImageAndWait(assetId);
+      Image newImg = image.getScaledInstance(50, 50, java.awt.Image.SCALE_SMOOTH);
+      return new ImageIcon(newImg, functionButton.getTooltip());
     }
-
-    URL imgURL = objectForClassload.getClass().getResource(path);
+    
+    URL imgURL = functionButton.getClass().getResource(path);
     if (imgURL != null) {
-      ImageIcon icon = new ImageIcon(imgURL, functionButton.getName());
+      ImageIcon icon = new ImageIcon(imgURL, functionButton.getTooltip());
       Image img = icon.getImage();
       Image newImg = img.getScaledInstance(50, 50, java.awt.Image.SCALE_SMOOTH);
-      icon = new ImageIcon(newImg);
-      return icon;
+      return new ImageIcon(newImg, functionButton.getTooltip());
 
     } else {
       System.err.println("Couldn't find file: " + path);
