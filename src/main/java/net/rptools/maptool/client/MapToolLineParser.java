@@ -32,7 +32,6 @@ import net.rptools.maptool.client.functions.*;
 import net.rptools.maptool.client.functions.AbortFunction.AbortFunctionException;
 import net.rptools.maptool.client.functions.AssertFunction.AssertFunctionException;
 import net.rptools.maptool.client.functions.ReturnFunction.ReturnFunctionException;
-import net.rptools.maptool.client.functions.frameworkfunctions.FrameworksFunctions;
 import net.rptools.maptool.client.ui.htmlframe.HTMLFrameFactory;
 import net.rptools.maptool.client.ui.macrobuttons.buttons.MacroButtonPrefs;
 import net.rptools.maptool.client.ui.zone.ZoneRenderer;
@@ -58,7 +57,6 @@ public class MapToolLineParser {
   /** MapTool functions to add to the parser. */
   private static final List<Function> mapToolParserFunctions =
       Stream.of(
-              FrameworksFunctions.getInstance(),
               AbortFunction.getInstance(),
               AssertFunction.getInstance(),
               AddAllToInitiativeFunction.getInstance(),
