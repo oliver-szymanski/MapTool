@@ -45,7 +45,6 @@ ext {
     def tags = grgit.tag.list().find {
         it.commit == head
     }
-    repo.close()
 
     revision = head.abbreviatedId
     revisionFull = head.id
