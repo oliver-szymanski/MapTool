@@ -127,9 +127,10 @@ public class ZoomFunctions extends AbstractFunction {
 
     if (pixels) {
       if ("json".equalsIgnoreCase(delim)) {
-        return createBoundsAsJSON(offsetX, offsetY, width, height);
+        return createBoundsAsJSON(offsetX, offsetY, offsetX + width, offsetY + height);
       } else {
-        return createBoundsAsStringProps(delim, offsetX, offsetY, width, height);
+        return createBoundsAsStringProps(
+            delim, offsetX, offsetY, offsetX + width, offsetY + height);
       }
     } else {
       ZoneRenderer zoneRenderer = MapTool.getFrame().getCurrentZoneRenderer();

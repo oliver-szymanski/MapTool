@@ -1,12 +1,18 @@
-Feature Branch
+Maptool 1.5.2
 =====
-Feature branch to test Campaign Dir
+
+___
+
+Bug Fixes
+-----
+* [#398][i398] - Fixed insertion of newline being only at the end of the command pane
 
 Enhancements
 -----
-* [#102][i102] - Save campaigns as directory structure, add new exports
 
-[i102]: https://github.com/RPTools/maptool/issues/102
+
+
+[i398]: https://github.com/RPTools/maptool/issues/398
 
 MapTool 1.5.1
 =====
@@ -30,6 +36,8 @@ Enhancements
 * [#289][i255] - token opacity slider needs preview
 * [#332][i332] - Allow to set color for personal lights in campaign Sight types
 
+
+
 [i50]: https://github.com/RPTools/maptool/issues/50 
 [i107]: https://github.com/RPTools/maptool/issues/107 
 [i189]: https://github.com/RPTools/maptool/issues/189
@@ -39,7 +47,7 @@ Enhancements
 [i326]: https://github.com/RPTools/maptool/issues/326
 [i324]: https://github.com/RPTools/maptool/issues/324
 [i332]: https://github.com/RPTools/maptool/issues/332
-[i392]: https://github.com/RPTools/maptool/issues/392
+
 
 MapTool 1.5.0
 =====
@@ -77,8 +85,6 @@ Bug Fixes
 
 Enhancements
 -----
-* [#283][p283] - New return function for use in macros to exit a macro  (not the whole macro execution) with a return value.
-* [#294][p294] - New macro.catchAbort/macro.catchAssert special variables to catch assert/abort in macros.
 * [#125][i125] - When entering invalid JVM values in Startup Preferences, a dialog will not display explaining why it was not saved. Another dialog will show if any JVM values were changed warning the user that invalid options could prevent MapTool from starting and to confirm changes.
 * [#77][i77] - Tweaked the A* algorithm for a more natural and straighter move though open spaces for both square and hex grids. Also tweaked the A* algorithm to find the shortest path more consistently.
 * [#49][i49] - Pathfinding! When activated (via new 'AI' toggle button), tokens will find the shortest path to it's destination as you drag them on the token or hidden layers, taking VBL into account. Yes, this means your tokens will no longer walk thru VBL! If no path can be found (or found within several seconds) no path will be shown, however you can still move your token to that location. This can happen because the area is blocked off or you are working with a very complicated or large map. With MapTool allowing unbounded/nearly infinite map space, I had to include a timeout to prevent an infinite search.
@@ -108,29 +114,15 @@ A new shift+ctrl+spacebar command along with a new pointer image is now availabl
 * [#237][i237] - Added support to use shift-enter to insert newlines into the command entry box (also known as the chat entry box)
 * [#239][i239] - MapToolScriptTokenMaker now handles function names with . notation and dynamically pulls in all functions names. TokenMakerMaker no longer needs to be ran upon changes to MTScript.
 * [#240][i240] - Macro Editor now has Auto-Completion for macro functions! A brief description and summary can be displayed (these will be added as time permits)
-<<<<<<< jadebringer
-=======
-<<<<<<< HEAD
 * [#332][i332] - Allow to set color for personal lights in campaign Sight types
-* [#324][i324] - fix output of getViewPort. This might break existing macro using workaround to interpret the broken result before the fix.
->>>>>>> d6bc20f Feature #365 Support wrap and syntax in property editor
+* [#324][i324] - fix output of getViewArea. This might break existing macro using workaround to interpret the broken result before the fix.
 * [#326][i326] - defineFunction with open edit window
-<<<<<<< jadebringer
-* [#324][i324] - fix output of getViewPort. This might break existing macro using workaround to interpret the broken result before the fix.
-* [#332][i332] - Allow to set color for personal lights in campaign Sight types
-=======
 * [#365][i365] - Support wrap and syntax in property editor
->>>>>>> d6bc20f Feature #365 Support wrap and syntax in property editor
 
 [i332]: https://github.com/RPTools/maptool/issues/332
 [i324]: https://github.com/RPTools/maptool/issues/324
 [i326]: https://github.com/RPTools/maptool/issues/326
-<<<<<<< jadebringer
-[p283]: https://github.com/RPTools/maptool/pull/283
-[p294]: https://github.com/RPTools/maptool/pull/294
-=======
 [i365]: https://github.com/RPTools/maptool/issues/365
->>>>>>> d6bc20f Feature #365 Support wrap and syntax in property editor
 [i210]: https://github.com/RPTools/maptool/issues/210
 [i113]: https://github.com/JamzTheMan/MapTool/issues/113
 [i108]: https://github.com/JamzTheMan/MapTool/issues/108
@@ -176,3 +168,4 @@ A new shift+ctrl+spacebar command along with a new pointer image is now availabl
 [i239]: https://github.com/RPTools/maptool/issues/239
 [i240]: https://github.com/RPTools/maptool/issues/240
 [i232]: https://github.com/RPTools/maptool/issues/232
+[i392]: https://github.com/RPTools/maptool/issues/392
